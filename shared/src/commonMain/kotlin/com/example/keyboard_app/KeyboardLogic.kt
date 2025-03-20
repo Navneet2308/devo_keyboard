@@ -13,10 +13,9 @@ class KeyboardLogic {
         return if (isUppercase) key.uppercase() else key.lowercase()
     }
     fun insertSpace(): String {
-        return " "   // Shared logic to return a space character
+        return " "
     }
     fun deleteCharacter(): Pair<Int, Int> {
-        // Return the number of characters to delete before and after the cursor
-        return Pair(1, 0)  // 1 character before, 0 after
+        return Pair(1, 0)
     }
 }
