@@ -7,8 +7,6 @@ class KeyboardLogic {
         return isUppercase
     }
 
-
-
     fun processKey(key: String): String {
         return if (isUppercase) key.uppercase() else key.lowercase()
     }

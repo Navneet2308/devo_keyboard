@@ -28,7 +28,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
-
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="main_color" type="color">#E8F0FE</item>
-    <item name="main_color_dark" type="color">#B0BEC5</item>
+    <item name="main_color_dark" type="color">#A5A6AB</item>
     <item name="key_text_color" type="color">#526e76</item>
     <item name="key_text_light_color" type="color">#101010</item>
     <item name="icon_color" type="color">#89989d</item>
