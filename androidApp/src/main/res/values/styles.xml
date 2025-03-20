@@ -1,0 +1,51 @@
+<resources>
+    <style name="AppTheme" parent="android:Theme.Material.NoActionBar"/>
+
+    <style name="KeyboardButtonStyle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">55dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:background">@drawable/btn_bg</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/key_text_color</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:layout_marginStart">2dp</item>
+        <item name="android:layout_marginEnd">2dp</item>
+    </style>
+
+    <style name="KeyboardButtonStyle_Normal">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">55dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:background">@drawable/btn_bg_normal</item>
+        <item name="android:textColor">@color/key_text_color</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:layout_marginStart">2dp</item>
+        <item name="android:layout_marginEnd">2dp</item>
+    </style>
+
+    <style name="KeyboardButtonStyle_Light">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">55dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:background">@drawable/btn_bg_light</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/key_text_color</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:layout_marginStart">2dp</item>
+        <item name="android:layout_marginEnd">2dp</item>
+    </style>
+
+
+
+</resources>
