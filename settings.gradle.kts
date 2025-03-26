@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 rootProject.name = "Keyboard_app"
 include(":androidApp")
 include(":shared")
+include(":lib:android")
+include(":lib:kotlin")

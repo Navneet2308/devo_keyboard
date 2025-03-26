@@ -1,5 +1,13 @@
 package com.example.keyboard_app.android.screens
 
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,69 +27,131 @@ import androidx.compose.runtime.setValue
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.graphicsLayer
+import com.example.keyboard_app.DevooApplication
+import com.example.keyboard_app.android.MainActivity
+import com.example.keyboard_app.android.theming.CurrentBoxColor
+import com.example.keyboard_app.android.theming.DarkColorPrimary
+import com.example.keyboard_app.android.theming.SelectedCircleColor
+import com.example.keyboard_app.android.theming.SetupButtonColor
+import com.example.keyboard_app.android.theming.UnSelectedCircleColor
+import com.example.keyboard_app.android.theming.appName
+import com.goodwy.keyboard.lib.util.InputMethodUtils
+import com.goodwy.keyboard.lib.util.InputMethodUtils.showImeEnablerActivity
+import com.goodwy.keyboard.lib.util.InputMethodUtils.showImePicker
 import kotlinx.coroutines.delay
 
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
-fun KeyboardSetupScreen() {
+fun KeyboardSetupScreen(context: Context) {
     var currentStep by remember { mutableStateOf(1) }
+    val isFlorisBoardSelected by InputMethodUtils.observeIsFlorisboardSelected(foregroundOnly = true)
+    val isFlorisBoardEnabled by InputMethodUtils.observeIsFlorisboardEnabled(foregroundOnly = true)
+
+    LaunchedEffect(isFlorisBoardEnabled, isFlorisBoardSelected) {
+        currentStep = when {
+            isFlorisBoardEnabled && isFlorisBoardSelected -> 3
+            isFlorisBoardEnabled -> 2
+            else -> 1
+        }
+        if (isFlorisBoardEnabled && currentStep==2) {
+            val backIntent = Intent(context, MainActivity::class.java)
+            backIntent.addFlags( Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_SINGLE_TOP or  Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            context.startActivity(backIntent)
+            Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+        }
+
+    }
+
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF918BFF))  // Light purple background
+            .background(DarkColorPrimary)
             .padding(16.dp)
+            .animateContentSize(animationSpec = tween(500))  // Smooth content size animation
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Step 1
-        StepItem(
-            step = "1",
-            title = "Enable",
-            description = "Yandex Keyboard in your keyboard settings",
-            isActive = currentStep >= 1,
-            isCurrent = currentStep == 1,
-            onClick = { currentStep = 1 }
-        )
+        // Stepper animation
+        AnimatedVisibility(true) {
+            StepItem(
+                step = "1",
+                title = "Enable",
+                description = "${appName} Keyboard in your keyboard settings",
+                isActive = currentStep > 1,
+                isCurrent = currentStep == 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .animateContentSize()
+            )
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        AnimatedVisibility(true) {
+            StepItem(
+                step = "2",
+                title = "Select",
+                description = "Select ${appName} Keyboard as your default",
+                isActive = currentStep > 2,
+                isCurrent = currentStep == 2,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .animateContentSize()
+            )
+        }
 
-        // Step 2
-        StepItem(
-            step = "2",
-            title = "Select",
-            description = "Select Yandex Keyboard as your default",
-            isActive = currentStep >= 2,
-            isCurrent = currentStep == 2,
-            onClick = { currentStep = 2 }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Step 3
-        StepItem(
-            step = "3",
-            title = "All done!",
-            description = "You're all set with Yandex Keyboard",
-            isActive = currentStep >= 3,
-            isCurrent = currentStep == 3,
-            onClick = { currentStep = 3 }
-        )
+        AnimatedVisibility(true) {
+            StepItem(
+                step = "3",
+                title = "All done!",
+                description = "You're all set with ${appName} Keyboard",
+                isActive = currentStep > 3,
+                isCurrent = currentStep == 3,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .animateContentSize()
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
+        // Animated button transition
         Button(
-            onClick = { currentStep = (currentStep % 3) + 1 },  // Toggle steps
+            shape = MaterialTheme.shapes.medium,
+            onClick = {
+                if (currentStep == 1) {
+
+                    showImeEnablerActivity(context)
+                } else if (currentStep == 2) {
+                    showImePicker(context)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF424242))
+                .padding(12.dp)
+                .animateContentSize(),  // Smooth button animation
+            colors = ButtonDefaults.buttonColors(containerColor = SetupButtonColor)
         ) {
-            Text(text = "Next", fontSize = 18.sp, color = Color.White)
+            Text(
+                text = when (currentStep) {
+                    1 -> "Enable"
+                    2 -> "Select"
+                    3 -> "Start"
+                    else -> "Next"
+                },
+                fontSize = 18.sp,
+                color = Color.White
+            )
         }
     }
 }
@@ -93,79 +163,79 @@ fun StepItem(
     description: String,
     isActive: Boolean,
     isCurrent: Boolean,
-    onClick: () -> Unit
+    modifier: Modifier = Modifier
 ) {
-    var scale by remember { mutableStateOf(1f) }
-    val interactionSource = remember { MutableInteractionSource() }
+    val backgroundColor = animateColorAsState(
+        targetValue = if (isCurrent) CurrentBoxColor else Color.Transparent,
+        animationSpec = tween(500)
+    )
 
-    LaunchedEffect(scale) {
-        if (scale < 1f) {
-            delay(100)
-            scale = 1f
-        }
-    }
+    val stepColor = animateColorAsState(
+        targetValue = when {
+            isCurrent -> CurrentBoxColor
+            isActive -> SelectedCircleColor
+            else -> Color.DarkGray
+        },
+        animationSpec = tween(500)
+    )
+    val textColor = animateColorAsState(
+        targetValue = when {
+            isCurrent -> SelectedCircleColor
+            isActive -> UnSelectedCircleColor
+            else -> UnSelectedCircleColor
+        },
+        animationSpec = tween(500)
+    )
 
-    val size = if (isCurrent) 56.dp else 40.dp
-    val backgroundColor = when {
-        isCurrent -> Color(0xFF4CAF50)   // Green for current step
-        isActive -> Color(0xFFBDBDBD)    // Gray for previous steps
-        else -> Color.LightGray
-    }
-    val textColor = if (isCurrent) Color.White else Color.DarkGray
-    val titleSize = if (isCurrent) 24.sp else 20.sp
-    val descriptionColor = if (isCurrent) Color.White else Color.Gray
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing))
-            .background(
-                if (isCurrent) Color(0xFFFFE082) else Color.Transparent,
-                RoundedCornerShape(16.dp)
-            )
+    Column(
+        modifier = modifier
+            .background(backgroundColor.value, RoundedCornerShape(16.dp))
             .padding(16.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = rememberRipple(color = Color.Gray)
-            ) {
-                scale = 0.9f  // Shrink effect on click
-                onClick()
-            }
     ) {
         Box(
             modifier = Modifier
-                .size(size)
-                .background(backgroundColor, RoundedCornerShape(50)),
+                .size(40.dp)
+                .background(
+                    if (isCurrent) SelectedCircleColor else UnSelectedCircleColor,
+                    RoundedCornerShape(50)
+                )
+                .animateContentSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = step,
-                color = textColor,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(
-                text = title,
-                fontSize = titleSize,
-                fontWeight = FontWeight.Bold,
-                color = if (isActive) Color.Black else Color.Gray
-            )
-            if (isCurrent) {
+            if (isActive) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Check Icon",
+                    tint = stepColor.value
+                )
+            } else {
                 Text(
-                    text = description,
+                    text = step,
+                    color = stepColor.value,
                     fontSize = 16.sp,
-                    color = descriptionColor,
-                    modifier = Modifier.padding(top = 4.dp)
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
+        Spacer(modifier = Modifier.height(5.dp))
+
+        Text(
+            text = title,
+            fontSize = if (isCurrent) 24.sp else 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = textColor.value
+        )
+
+        if (isCurrent) {
+            Text(
+                text = description,
+                fontSize = 16.sp,
+                color = SelectedCircleColor,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
     }
 }
+
+
 

@@ -1,10 +1,30 @@
-package com.example.keyboard_app.android.utils
+/*
+ * Copyright (C) 2021 Patrick Goldinger
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+package com.goodwy.keyboard.lib.util
 
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,13 +33,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.example.keyboard_app.android.BuildConfig
+import com.example.keyboard_app.android.MainActivity
+import com.goodwy.keyboard.lib.compose.observeAsState
+import com.goodwy.keyboard.lib.devtools.flogDebug
 import com.goodwy.lib.android.AndroidSettings
+import com.goodwy.lib.android.AndroidVersion
 import com.goodwy.lib.android.systemServiceOrNull
-
 import kotlinx.coroutines.delay
-
 private const val DELIMITER = ':'
-private const val IME_SERVICE_CLASS_NAME = "com.goodwy.keyboard.FlorisImeService"
+private const val IME_SERVICE_CLASS_NAME = "KeyboardService"
 private const val TIMED_QUERY_DELAY = 500L
 
 object InputMethodUtils {
@@ -95,9 +117,9 @@ object InputMethodUtils {
     }
 
     fun showImeEnablerActivity(context: Context) {
-        val intent = Intent()
-        intent.action = Settings.ACTION_INPUT_METHOD_SETTINGS
-        intent.addCategory(Intent.CATEGORY_DEFAULT)
+        val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).apply {
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
         context.startActivity(intent)
     }
 
@@ -113,7 +135,7 @@ object InputMethodUtils {
 
     @RequiresApi(api = 34)
     @Composable
-    private fun timedObserveIsFlorisBoardEnabled(): State<Boolean> {
+    internal fun timedObserveIsFlorisBoardEnabled(): State<Boolean> {
         val state = remember { mutableStateOf(false) }
         val context = LocalContext.current
         LaunchedEffect(Unit) {
