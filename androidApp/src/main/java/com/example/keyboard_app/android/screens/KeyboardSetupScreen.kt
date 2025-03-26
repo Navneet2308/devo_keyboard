@@ -25,17 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.graphicsLayer
-import com.example.keyboard_app.DevooApplication
 import com.example.keyboard_app.android.MainActivity
 import com.example.keyboard_app.android.theming.CurrentBoxColor
 import com.example.keyboard_app.android.theming.DarkColorPrimary
@@ -46,14 +39,13 @@ import com.example.keyboard_app.android.theming.appName
 import com.goodwy.keyboard.lib.util.InputMethodUtils
 import com.goodwy.keyboard.lib.util.InputMethodUtils.showImeEnablerActivity
 import com.goodwy.keyboard.lib.util.InputMethodUtils.showImePicker
-import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun KeyboardSetupScreen(context: Context) {
     var currentStep by remember { mutableStateOf(1) }
-    val isFlorisBoardSelected by InputMethodUtils.observeIsFlorisboardSelected(foregroundOnly = true)
-    val isFlorisBoardEnabled by InputMethodUtils.observeIsFlorisboardEnabled(foregroundOnly = true)
+    val isFlorisBoardSelected by InputMethodUtils.observeIsKeyboardSelected(foregroundOnly = true)
+    val isFlorisBoardEnabled by InputMethodUtils.observeIsKeyboardEnabled(foregroundOnly = true)
 
     LaunchedEffect(isFlorisBoardEnabled, isFlorisBoardSelected) {
         currentStep = when {
@@ -61,9 +53,9 @@ fun KeyboardSetupScreen(context: Context) {
             isFlorisBoardEnabled -> 2
             else -> 1
         }
-        if (isFlorisBoardEnabled && currentStep==2) {
+        if (isFlorisBoardEnabled && currentStep == 2) {
             val backIntent = Intent(context, MainActivity::class.java)
-            backIntent.addFlags( Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_SINGLE_TOP or  Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            backIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             context.startActivity(backIntent)
             Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
         }
@@ -125,7 +117,6 @@ fun KeyboardSetupScreen(context: Context) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Animated button transition
         Button(
             shape = MaterialTheme.shapes.medium,
             onClick = {

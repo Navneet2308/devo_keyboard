@@ -37,8 +37,8 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Composable
     fun StartScreen(context: Context) {
-        val isKeyBoardEnabled = InputMethodUtils.isFlorisboardEnabled(context)
-        val isKeyBoardSelected = InputMethodUtils.isFlorisboardSelected(context)
+        val isKeyBoardEnabled = InputMethodUtils.isKeyboardEnabled(context)
+        val isKeyBoardSelected = InputMethodUtils.isKeyboardSelected(context)
         if (isKeyBoardEnabled && isKeyBoardSelected) {
             HomePageScreen()
         } else {

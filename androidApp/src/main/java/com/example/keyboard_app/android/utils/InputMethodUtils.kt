@@ -1,30 +1,9 @@
-/*
- * Copyright (C) 2021 Patrick Goldinger
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
 package com.goodwy.keyboard.lib.util
-
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
-import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.example.keyboard_app.android.BuildConfig
-import com.example.keyboard_app.android.MainActivity
 import com.goodwy.keyboard.lib.compose.observeAsState
 import com.goodwy.keyboard.lib.devtools.flogDebug
 import com.goodwy.lib.android.AndroidSettings
@@ -45,7 +23,7 @@ private const val IME_SERVICE_CLASS_NAME = "KeyboardService"
 private const val TIMED_QUERY_DELAY = 500L
 
 object InputMethodUtils {
-    fun isFlorisboardEnabled(context: Context): Boolean {
+    fun isKeyboardEnabled(context: Context): Boolean {
         return if (AndroidVersion.ATLEAST_API34_U) {
             context.systemServiceOrNull(InputMethodManager::class)
                 ?.enabledInputMethodList
@@ -54,11 +32,11 @@ object InputMethodUtils {
             val enabledImeList = AndroidSettings.Secure.getString(
                 context, Settings.Secure.ENABLED_INPUT_METHODS
             )
-            enabledImeList != null && parseIsFlorisboardEnabled(context, enabledImeList)
+            enabledImeList != null && parseIsKeyboardEnabled(context, enabledImeList)
         }
     }
 
-    fun isFlorisboardSelected(context: Context): Boolean {
+    fun isKeyboardSelected(context: Context): Boolean {
         return if (AndroidVersion.ATLEAST_API34_U) {
             context.systemServiceOrNull(InputMethodManager::class)
                 ?.currentInputMethodInfo
@@ -67,12 +45,12 @@ object InputMethodUtils {
             val selectedIme = AndroidSettings.Secure.getString(
                 context, Settings.Secure.DEFAULT_INPUT_METHOD
             )
-            selectedIme != null && parseIsFlorisboardSelected(context, selectedIme)
+            selectedIme != null && parseIsKeyboardSelected(context, selectedIme)
         }
     }
 
     @Composable
-    fun observeIsFlorisboardEnabled(
+    fun observeIsKeyboardEnabled(
         context: Context = LocalContext.current.applicationContext,
         foregroundOnly: Boolean = false,
     ): State<Boolean> {
@@ -82,13 +60,13 @@ object InputMethodUtils {
             AndroidSettings.Secure.observeAsState(
                 key = Settings.Secure.ENABLED_INPUT_METHODS,
                 foregroundOnly = foregroundOnly,
-                transform = { parseIsFlorisboardEnabled(context, it.toString()) },
+                transform = { parseIsKeyboardEnabled(context, it.toString()) },
             )
         }
     }
 
     @Composable
-    fun observeIsFlorisboardSelected(
+    fun observeIsKeyboardSelected(
         context: Context = LocalContext.current.applicationContext,
         foregroundOnly: Boolean = false,
     ): State<Boolean> {
@@ -98,19 +76,19 @@ object InputMethodUtils {
             AndroidSettings.Secure.observeAsState(
                 key = Settings.Secure.DEFAULT_INPUT_METHOD,
                 foregroundOnly = foregroundOnly,
-                transform = { parseIsFlorisboardSelected(context, it.toString()) },
+                transform = { parseIsKeyboardSelected(context, it.toString()) },
             )
         }
     }
 
-    fun parseIsFlorisboardEnabled(context: Context, activeImeIds: String): Boolean {
+    fun parseIsKeyboardEnabled(context: Context, activeImeIds: String): Boolean {
         flogDebug { activeImeIds }
         return activeImeIds.split(DELIMITER).map { componentStr ->
             ComponentName.unflattenFromString(componentStr)
         }.any { it?.packageName == context.packageName && it?.className == IME_SERVICE_CLASS_NAME }
     }
 
-    fun parseIsFlorisboardSelected(context: Context, selectedImeId: String): Boolean {
+    fun parseIsKeyboardSelected(context: Context, selectedImeId: String): Boolean {
         flogDebug { selectedImeId }
         val component = ComponentName.unflattenFromString(selectedImeId)
         return component?.packageName == context.packageName && component?.className == IME_SERVICE_CLASS_NAME
@@ -140,7 +118,7 @@ object InputMethodUtils {
         val context = LocalContext.current
         LaunchedEffect(Unit) {
             while (true) {
-                state.value = isFlorisboardEnabled(context)
+                state.value = isKeyboardEnabled(context)
                 delay(TIMED_QUERY_DELAY)
             }
         }
@@ -154,7 +132,7 @@ object InputMethodUtils {
         val context = LocalContext.current
         LaunchedEffect(Unit) {
             while (true) {
-                state.value = isFlorisboardSelected(context)
+                state.value = isKeyboardSelected(context)
                 delay(TIMED_QUERY_DELAY)
             }
         }
