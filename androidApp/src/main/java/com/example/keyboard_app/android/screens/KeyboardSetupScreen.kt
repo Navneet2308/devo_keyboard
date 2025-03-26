@@ -40,7 +40,6 @@ import com.goodwy.keyboard.lib.util.InputMethodUtils
 import com.goodwy.keyboard.lib.util.InputMethodUtils.showImeEnablerActivity
 import com.goodwy.keyboard.lib.util.InputMethodUtils.showImePicker
 
-@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun KeyboardSetupScreen(context: Context) {
     var currentStep by remember { mutableStateOf(1) }

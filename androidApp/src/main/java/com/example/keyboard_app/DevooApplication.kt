@@ -9,16 +9,6 @@ private var FlorisApplicationReference = WeakReference<DevooApplication?>(null)
 
 @Suppress("unused")
 class DevooApplication : Application() {
-    companion object {
-        init {
-            try {
-//                System.loadLibrary("fl_native")
-            } catch (_: Exception) {
-            }
-//            FlorisImeTheme.init()
-        }
-    }
-
 }
     private tailrec fun Context.florisApplication(): DevooApplication {
         return when (this) {

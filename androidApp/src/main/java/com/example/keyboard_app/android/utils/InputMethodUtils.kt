@@ -19,7 +19,7 @@ import com.goodwy.lib.android.AndroidVersion
 import com.goodwy.lib.android.systemServiceOrNull
 import kotlinx.coroutines.delay
 private const val DELIMITER = ':'
-private const val IME_SERVICE_CLASS_NAME = "KeyboardService"
+private const val IME_SERVICE_CLASS_NAME = "com.example.keyboard_app.android.KeyboardService"
 private const val TIMED_QUERY_DELAY = 500L
 
 object InputMethodUtils {
@@ -35,6 +35,7 @@ object InputMethodUtils {
             enabledImeList != null && parseIsKeyboardEnabled(context, enabledImeList)
         }
     }
+
 
     fun isKeyboardSelected(context: Context): Boolean {
         return if (AndroidVersion.ATLEAST_API34_U) {
@@ -82,6 +83,7 @@ object InputMethodUtils {
     }
 
     fun parseIsKeyboardEnabled(context: Context, activeImeIds: String): Boolean {
+        println("activeImeIdsactiveImeIds"+activeImeIds)
         flogDebug { activeImeIds }
         return activeImeIds.split(DELIMITER).map { componentStr ->
             ComponentName.unflattenFromString(componentStr)
