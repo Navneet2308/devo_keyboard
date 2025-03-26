@@ -1,6 +1,9 @@
 <resources>
-    <style name="AppTheme" parent="android:Theme.Material.NoActionBar"/>
+    <string name="app_name">Divoo</string>
+    <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
 
+    </style>
     <style name="KeyboardButtonStyle">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">55dp</item>

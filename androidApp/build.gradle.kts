@@ -15,6 +15,7 @@ android {
         versionName = "1.0"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     packaging {
@@ -27,6 +28,7 @@ android {
             isMinifyEnabled = false
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -42,5 +44,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
+    implementation(project(":androidApp"))
     debugImplementation(libs.compose.ui.tooling)
+
 }
