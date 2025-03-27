@@ -1,5 +1,6 @@
 [versions]
 agp = "8.7.2"
+datastorePreferences = "1.1.4"
 kotlin = "2.0.0"
 compose = "1.5.4"
 compose-material3 = "1.1.2"
@@ -10,9 +11,19 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 kotlinxSerializationJson = "1.8.0"
+kotlinxSerializationJsonVersion = "1.6.0"
 material = "1.12.0"
-
+uiAndroid = "1.7.8"
+foundationAndroid = "1.7.8"
+patrickgold-compose-tooltip = "0.1.0"
+patrickgold-jetpref = "0.2.0-beta03"
 [libraries]
+patrickgold-jetpref-datastore-model = { module = "dev.patrickgold.jetpref:jetpref-datastore-model", version.ref = "patrickgold-jetpref" }
+patrickgold-jetpref-datastore-ui = { module = "dev.patrickgold.jetpref:jetpref-datastore-ui", version.ref = "patrickgold-jetpref" }
+patrickgold-jetpref-material-ui = { module = "dev.patrickgold.jetpref:jetpref-material-ui", version.ref = "patrickgold-jetpref" }
+
+androidx-datastore-core = { module = "androidx.datastore:datastore-core", version.ref = "datastorePreferences" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
@@ -26,7 +37,10 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+kotlinx-serialization-json-v160 = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJsonVersion" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
+androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

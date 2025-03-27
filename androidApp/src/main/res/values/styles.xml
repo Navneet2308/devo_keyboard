@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Divoo</string>
+    <string name="app_name">Divoo Keyboard</string>
     <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
 
