@@ -56,9 +56,12 @@ dependencies {
     implementation(project(":lib:kotlin"))
     implementation ("androidx.activity:activity-compose:1.7.0")
     implementation ("androidx.lifecycle:lifecycle-service:2.6.1")
+    implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.6.0")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation ("com.louiscad.splitties:splitties-systemservices:3.0.0")
     implementation ("com.louiscad.splitties:splitties-views:3.0.0")
+    implementation("com.google.accompanist:accompanist-flowlayout:0.32.0")
 
     debugImplementation(libs.compose.ui.tooling)
 

@@ -1,108 +1,204 @@
 package com.example.keyboard_app.android.screens
 
-
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.view.KeyEvent
+import android.view.MotionEvent
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.keyboard_app.android.KeyboardService
+import com.example.keyboard_app.android.R
+import com.example.keyboard_app.android.utils.getBorderColor
+import com.example.keyboard_app.android.utils.getKeyColor
+import com.example.keyboard_app.android.utils.getKeyIconColor
+import com.example.keyboard_app.android.utils.getKeyTextColor
+import com.example.keyboard_app.android.utils.getKeyboardBG
+private val handler = Handler(Looper.getMainLooper())
+private var isLongPressed = false
+private var isClicked = false
 
 @Composable
-fun KeyboardScreen() {
-    val keysMatrix = arrayOf(
-        arrayOf("Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"),
-        arrayOf("A", "S", "D", "F", "G", "H", "J", "K", "L"),
-        arrayOf("Z", "X", "C", "V", "B", "N", "M")
-    )
+fun KeyboardScreen(getKeys: () -> List<List<String>>) {
+
     Column(
         modifier = Modifier
-            .background(Color(0xFF9575CD))
             .fillMaxWidth()
+            .background(getKeyboardBG())
+            .padding(8.dp)
     ) {
-        keysMatrix.forEach { row ->
-            FixedHeightBox(modifier = Modifier.fillMaxWidth(), height = 56.dp) {
-                Row(Modifier) {
-                    row.forEach { key ->
-                        KeyboardKey(keyboardKey = key, modifier = Modifier.weight(1f))
+        getKeys().forEach { row ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                val weights = calculateWeights(row)
+                row.forEachIndexed { index, key ->
+                    KeyboardKey(key, Modifier.weight(weights[index]).height(48.dp))
+                }
+            }
+        }
+    }
+}
+
+fun calculateWeights(row: List<String>, totalWeight: Float = 10f): List<Float> {
+    val specialWeights = mapOf("language" to 4f, " " to 0.5f, "⏎" to 2f, "↑" to 1.5f, "←" to 1.5f)
+    val specialKeys = row.filter { it in specialWeights }
+    val specialWeightSum = specialKeys.fold(0f) { acc, key -> acc + (specialWeights[key] ?: 0f) }
+
+    val normalKeys = row.size - specialKeys.size
+    val normalWeight =
+        if (normalKeys > 0) (totalWeight - specialWeightSum) / normalKeys else totalWeight
+
+    return row.map { specialWeights[it] ?: normalWeight }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun KeyboardKey(key: String, modifier: Modifier = Modifier) {
+    val ctx = LocalContext.current
+    val isSpecial = key in listOf("←", ":)", "?1#", "language", "⏎")
+    val isSmallText = key.length > 3 || key == "English (United Sta..."
+
+    if (key.contains(" ")) {
+        Spacer(modifier = modifier)
+    } else {
+        Box(
+            modifier = modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(getKeyColor(isSpecial))
+                .pointerInteropFilter { event ->
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            handleKeyAction(ctx, key)
+                            isClicked = true
+                            startLongPressAction(ctx, key)
+                            true
+                        }
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            stopLongPressAction()
+                            isClicked = false
+                            true
+                        }
+                        else -> false
                     }
                 }
+                .border(1.dp, getBorderColor(), RoundedCornerShape(8.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                key.contains("^") -> DualTextKey(key)
+                key in listOf(":)", "↑", "←", "⏎") -> IconKey(key, isSmallText)
+                else -> TextKey(key, isSmallText)
             }
         }
     }
 }
 
 @Composable
-fun FixedHeightBox(modifier: Modifier, height: Dp, content: @Composable () -> Unit) {
-    Layout(modifier = modifier, content = content) { measurables, constraints ->
-        val placeables = measurables.map { measurable ->
-            measurable.measure(constraints)
-        }
-        val h = height.roundToPx()
-        layout(constraints.maxWidth, h) {
-            placeables.forEach { placeable ->
-                placeable.place(x = 0, y = kotlin.math.min(0, h - placeable.height))
-            }
-        }
-    }
-}
-
-@Composable
-fun KeyboardKey(
-    keyboardKey: String,
-    modifier: Modifier
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val pressed = interactionSource.collectIsPressedAsState()
-    val ctx = LocalContext.current
-    Box(modifier = modifier.fillMaxHeight(), contentAlignment = Alignment.BottomCenter) {
+fun DualTextKey(key: String) {
+    Box(Modifier.fillMaxWidth().height(60.dp)) {
         Text(
-            keyboardKey,
-            Modifier
-                .fillMaxWidth()
-                .padding(2.dp)
-                .border(1.dp, Color.Black)
-                .clickable(interactionSource = interactionSource, indication = null) {
-                    (ctx as KeyboardService).currentInputConnection.commitText(
-                        keyboardKey,
-                        keyboardKey
-                            .length
-                    )
-                }
-                .background(Color.White)
-                .padding(
-                    start = 12.dp,
-                    end = 12.dp,
-                    top = 16.dp,
-                    bottom = 16.dp
-                )
-
+            text = key.split("^")[1], fontSize = 10.sp,
+            color = getKeyTextColor(), modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
         )
-        if (pressed.value) {
-            Text(
-                keyboardKey,
-                Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, Color.Black)
-                    .background(Color.White)
-                    .padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 16.dp,
-                        bottom = 48.dp
-                    )
-            )
+        Text(
+            text = key.split("^")[0], fontSize = 18.sp,
+            color =getKeyTextColor(), modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+fun stopLongPressAction() {
+    isLongPressed = false
+    handler.removeCallbacksAndMessages(null)
+}
+
+@Composable
+fun IconKey(key: String, isSmallText: Boolean) {
+    val icon = when (key) {
+        ":)" -> R.drawable.emoji_dark
+        "↑" -> R.drawable.arrow_top_dark
+        "←" -> R.drawable.delete_dark
+        "⏎" -> R.drawable.enter_dark
+        else -> null
+    }
+    icon?.let {
+        Icon(
+            painter = painterResource(id = it),
+            contentDescription = key,
+            tint = getKeyIconColor(),
+            modifier = Modifier.size(if (isSmallText) 18.dp else 24.dp)
+        )
+    }
+}
+
+@Composable
+fun TextKey(key: String, isSmallText: Boolean) {
+    Text(
+        text = key,
+        fontSize = if (isSmallText) 14.sp else 18.sp,
+        color = getKeyTextColor(),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+fun startLongPressAction(ctx: Context, key: String) {
+    isLongPressed = true
+    val repeatAction = object : Runnable {
+        override fun run() {
+            if (isLongPressed) {
+                handleLongKeyAction(ctx, key)
+                handler.postDelayed(this, 100)  // Adjust the delay as needed (100ms)
+            }
+        }
+    }
+    handler.post(repeatAction)
+}
+
+fun handleLongKeyAction(ctx: Context, key: String) {
+    val service = ctx as? KeyboardService ?: return
+    val cleanedKey = key.first().toString()
+    when (cleanedKey) {
+        "⏎" -> service.currentInputConnection?.sendKeyEvent(
+            KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)
+        )
+
+        "←" -> service.currentInputConnection?.deleteSurroundingText(1, 0)
+
+    }
+}
+
+
+fun handleKeyAction(ctx: Context, key: String) {
+    val service = ctx as? KeyboardService ?: return
+    val cleanedKey = key.first().toString()
+    when (cleanedKey) {
+        "language" -> service.currentInputConnection?.commitText(" ", 1)
+        "⏎" -> {}
+        "←" -> {}
+        "↑" -> service.toggleCaps()
+        else -> {
+            val textToCommit =
+                if (service.isCapsEnabled) cleanedKey.uppercase() else cleanedKey.lowercase()
+            service.currentInputConnection?.commitText(textToCommit, textToCommit.length)
         }
     }
 }
