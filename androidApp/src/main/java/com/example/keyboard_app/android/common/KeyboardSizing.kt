@@ -16,29 +16,6 @@ object KeyboardSizing {
     val keyCornerRadius = 8.dp
 
 
-    object BoxSizes {
-        val compactSize = 35.dp
-        val mediumSize = 40.dp
-        val expandedSize = 45.dp
-        val defaultSize = 40.dp // Fallback size
-    }
-
-    @Composable
-    fun calculateKeyHeight(screenHeight: Dp): Dp {
-        return (screenHeight * 0.06f).coerceAtMost(48.dp)
-    }
-
-    @Composable
-    fun getintroboxcontentModifier(windowSizeClass: WindowWidthSizeClass): Modifier {
-        return when (windowSizeClass) {
-            WindowWidthSizeClass.Compact -> Modifier.fillMaxSize().padding(horizontal = 5.dp, vertical = 8.dp)
-            WindowWidthSizeClass.Medium -> Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 15.dp)
-            WindowWidthSizeClass.Expanded -> Modifier.padding(horizontal = 10.dp, vertical = 15.dp)
-            else -> {
-                Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 15.dp)
-            }
-        }
-    }
 
     @Composable
     fun getintrocontentModifier(windowSizeClass: WindowWidthSizeClass): Modifier {
@@ -53,6 +30,7 @@ object KeyboardSizing {
 
 
     }
+
     @Composable
     fun getintrobuttonModifier(windowSizeClass: WindowWidthSizeClass): Modifier {
         return when (windowSizeClass) {
@@ -63,10 +41,7 @@ object KeyboardSizing {
                 Modifier.fillMaxWidth().padding(12.dp)
             }
         }
-
-
     }
-
 
     @Composable
     fun checkIslandscape(windowSizeClass: WindowWidthSizeClass): Boolean {
@@ -144,6 +119,26 @@ object KeyboardSizing {
                 10.dp
             }
         }}
+
+
+
+    @Composable
+    fun calculateKeyHeight(screenHeight: Dp): Dp {
+        return (screenHeight * 0.06f).coerceAtMost(48.dp)
+    }
+
+    @Composable
+    fun getintroboxcontentModifier(windowSizeClass: WindowWidthSizeClass): Modifier {
+        return when (windowSizeClass) {
+            WindowWidthSizeClass.Compact -> Modifier.fillMaxSize().padding(horizontal = 5.dp, vertical = 8.dp)
+            WindowWidthSizeClass.Medium -> Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 15.dp)
+            WindowWidthSizeClass.Expanded -> Modifier.padding(horizontal = 10.dp, vertical = 15.dp)
+            else -> {
+                Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 15.dp)
+            }
+        }
+    }
+
 
     @Composable
     fun calculateKeyWidth(screenWidth: Dp, rowSize: Int): Dp {
