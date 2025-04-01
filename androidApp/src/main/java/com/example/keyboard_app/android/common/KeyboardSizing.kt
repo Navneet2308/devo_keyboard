@@ -15,6 +15,14 @@ object KeyboardSizing {
     val keyMargin = 2.dp
     val keyCornerRadius = 8.dp
 
+
+    object BoxSizes {
+        val compactSize = 35.dp
+        val mediumSize = 40.dp
+        val expandedSize = 45.dp
+        val defaultSize = 40.dp // Fallback size
+    }
+
     @Composable
     fun calculateKeyHeight(screenHeight: Dp): Dp {
         return (screenHeight * 0.06f).coerceAtMost(48.dp)

@@ -70,7 +70,7 @@ fun KeyboardSetupScreen(context: Context, windowSizeClass: WindowWidthSizeClass)
             .background(DarkColorPrimary) // Apply background to the Box
     )
     {
-        if(checkIslandscape(windowSizeClass)) {
+        if (checkIslandscape(windowSizeClass)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -121,10 +121,8 @@ fun KeyboardSetupScreen(context: Context, windowSizeClass: WindowWidthSizeClass)
                 }
             }
 
-        }
-        else
-        {
-            Column (
+        } else {
+            Column(
                 modifier = getintrocontentModifier(windowSizeClass)
                     .verticalScroll(rememberScrollState())
                     .background(DarkColorPrimary)
@@ -207,11 +205,13 @@ fun StepItem(
         animationSpec = tween(500)
     )
 
-    Box(modifier = getintroboxcontentModifier(windowSizeClass)
-        .background(
-            backgroundColor.value,
-            RoundedCornerShape(getSetupBoxCorner(windowSizeClass))
-        ))
+    Box(
+        modifier = getintroboxcontentModifier(windowSizeClass)
+            .background(
+                backgroundColor.value,
+                RoundedCornerShape(getSetupBoxCorner(windowSizeClass))
+            )
+    )
     {
         Column(
             modifier = Modifier.padding(getSetupBoxInternalPadding(windowSizeClass))
@@ -244,7 +244,7 @@ fun StepItem(
             }
             Text(
                 text = title,
-                fontSize =getSetupTitleTextSize(isCurrent,windowSizeClass),
+                fontSize = getSetupTitleTextSize(isCurrent, windowSizeClass),
                 fontWeight = FontWeight.SemiBold,
                 color = textColor.value
             )
