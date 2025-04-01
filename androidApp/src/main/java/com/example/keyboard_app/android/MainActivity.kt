@@ -1,5 +1,5 @@
 package com.example.keyboard_app.android
-
+import android.app.Activity
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -9,8 +9,11 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.example.keyboard_app.android.screens.HomePageScreen
 import com.example.keyboard_app.android.screens.KeyboardSetupScreen
 import com.example.keyboard_app.android.theming.DevooTheme
@@ -31,6 +34,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Composable
     fun StartScreen(context: Context) {
@@ -39,7 +43,8 @@ class MainActivity : ComponentActivity() {
         if (isKeyBoardEnabled && isKeyBoardSelected) {
             HomePageScreen()
         } else {
-            KeyboardSetupScreen(context)
+            val windowSizeClass = calculateWindowSizeClass(LocalContext.current as Activity)
+            KeyboardSetupScreen(context = LocalContext.current, windowSizeClass = windowSizeClass.widthSizeClass)
         }
     }
 }

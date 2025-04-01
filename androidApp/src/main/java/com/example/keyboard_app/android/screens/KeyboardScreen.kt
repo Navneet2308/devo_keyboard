@@ -1,6 +1,7 @@
 package com.example.keyboard_app.android.screens
 
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Handler
 import android.os.Looper
 
@@ -24,13 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.keyboard_app.android.KeyboardService
 import com.example.keyboard_app.android.R
+import com.example.keyboard_app.android.common.KeyboardSizing
 import com.example.keyboard_app.android.utils.getBorderColor
 import com.example.keyboard_app.android.utils.getKeyColor
 import com.example.keyboard_app.android.utils.getKeyIconColor
@@ -46,12 +50,21 @@ private var continuousActionJob: kotlinx.coroutines.Job? = null
 fun KeyboardScreen(getKeys: () -> List<List<String>>) {
     val service = LocalContext.current as? KeyboardService ?: return
     val keys = getKeys()
-
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    val keyHeight = KeyboardSizing.calculateKeyHeight(screenHeight)
+    val keyWidth = KeyboardSizing.calculateKeyWidth(screenWidth, keys.firstOrNull()?.size ?: 10)
+    val adjustedKeyHeight = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        keyHeight * 1.3f
+    } else {
+        keyHeight
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(getKeyboardBG())
-            .padding(8.dp)
+            .padding(KeyboardSizing.keyMargin)
     ) {
         if (service._isEmojiKeyboard.value) {
             EmojiKeyboard(service)
@@ -60,19 +73,24 @@ fun KeyboardScreen(getKeys: () -> List<List<String>>) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        .padding(vertical = KeyboardSizing.keyMargin),
+                    horizontalArrangement = Arrangement.spacedBy(KeyboardSizing.keyMargin)
                 ) {
                     val weights = calculateWeights(row)
                     row.forEachIndexed { index, key ->
-                        KeyboardKey(key, Modifier.weight(weights[index]).height(48.dp))
+                        KeyboardKey(
+                            key = key,
+                            modifier = Modifier
+                                .weight(weights[index])
+                                .height(adjustedKeyHeight)
+                                .width(keyWidth)
+                        )
                     }
                 }
             }
         }
     }
 }
-
 
 fun calculateWeights(row: List<String>, totalWeight: Float = 10f): List<Float> {
     val specialWeights =
@@ -90,17 +108,28 @@ fun calculateWeights(row: List<String>, totalWeight: Float = 10f): List<Float> {
 @Composable
 fun KeyboardKey(key: String, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
+    val configuration = LocalConfiguration.current
     var isKeyPressed by remember { mutableStateOf(false) }
     var isLongPressStarted by remember { mutableStateOf(false) }
+
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+
     val isSpecial = key in listOf("language", "←", "⏎", ":)", "↑")
     val isSmallText = key.length > 3 || key == "English (United Sta..."
     val coroutineScope = rememberCoroutineScope()
+
+    val baseTextSize = KeyboardSizing.calculateTextSize(screenWidth, screenHeight)
+    val smallTextSize = KeyboardSizing.calculateTextSize(screenWidth, screenHeight, true)
+    val iconSize = KeyboardSizing.calculateIconSize(screenWidth, screenHeight)
+
+
     if (key.contains(" ")) {
         Spacer(modifier = modifier)
     } else {
         Box(
             modifier = modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(KeyboardSizing.keyCornerRadius))
                 .background(getKeyColor(isSpecial))
                 .scale(if (isKeyPressed) 0.95f else 1f)
                 .pointerInteropFilter { event ->
@@ -165,23 +194,15 @@ fun KeyboardKey(key: String, modifier: Modifier = Modifier) {
                         else -> false
                     }
                 }
-                .border(1.dp, getBorderColor(), RoundedCornerShape(8.dp)),
+                .border(1.dp, getBorderColor(), RoundedCornerShape(KeyboardSizing.keyCornerRadius)),
             contentAlignment = Alignment.Center
         ) {
             when {
-                key.contains("^") -> DualTextKey(key)
-                key in listOf("←", "⏎", ":)", "↑") -> IconKey(key, isSmallText)
-                else -> TextKey(key, isSmallText)
+                key.contains("^") -> DualTextKey(key)  // Remove the size parameters
+                key in listOf("←", "⏎", ":)", "↑") -> IconKey(key, isSmallText, iconSize)
+                else -> TextKey(key, isSmallText, baseTextSize, smallTextSize)
             }
         }
-    }
-}
-
-fun handleLongKeyAction(ctx: Context, key: String) {
-    val service = ctx as? KeyboardService ?: return
-    if (key.contains("^")) {
-        val secondChar = key.split("^")[1]
-        service.currentInputConnection?.commitText(secondChar, secondChar.length)
     }
 }
 
@@ -191,50 +212,6 @@ fun handleShortPressAction(ctx: Context, key: String) {
         val firstChar = key.split("^")[0]
         service.currentInputConnection?.commitText(firstChar, firstChar.length)
     }
-}
-
-@Composable
-fun DualTextKey(key: String) {
-    Box(Modifier.fillMaxWidth().height(60.dp)) {
-        Text(
-            text = key.split("^")[1], fontSize = 10.sp,
-            color = getKeyTextColor(), modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
-        )
-        Text(
-            text = key.split("^")[0], fontSize = 18.sp,
-            color = getKeyTextColor(), modifier = Modifier.align(Alignment.Center)
-        )
-    }
-}
-
-@Composable
-fun IconKey(key: String, isSmallText: Boolean) {
-    val icon = when (key) {
-        "←" -> R.drawable.delete_dark
-        "⏎" -> R.drawable.enter_dark
-        ":)" -> R.drawable.emoji_dark
-        "↑" -> R.drawable.arrow_top_dark
-        else -> null
-    }
-    icon?.let {
-        Icon(
-            painter = painterResource(id = it),
-            contentDescription = key,
-            tint = getKeyIconColor(),
-            modifier = Modifier.size(if (isSmallText) 18.dp else 24.dp)
-        )
-    }
-}
-
-@Composable
-fun TextKey(key: String, isSmallText: Boolean) {
-    Text(
-        text = key,
-        fontSize = if (isSmallText) 14.sp else 18.sp,
-        color = getKeyTextColor(),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
-    )
 }
 
 fun handleKeyAction(ctx: Context, key: String) {
@@ -274,6 +251,35 @@ fun handleKeyAction(ctx: Context, key: String) {
     }
 }
 
+@Composable
+fun DualTextKey(key: String) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+
+    val (mainTextSize, secondaryTextSize) = KeyboardSizing.calculateDualTextSize(
+        screenWidth,
+        screenHeight
+    )
+
+    Box(Modifier.fillMaxWidth().height(60.dp)) {
+        Text(
+            text = key.split("^")[1],
+            fontSize = secondaryTextSize,
+            color = getKeyTextColor(),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+        )
+        Text(
+            text = key.split("^")[0],
+            fontSize = mainTextSize,
+            color = getKeyTextColor(),
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+
 fun startContinuousAction(ctx: Context, key: String) {
     stopContinuousAction()
     continuousActionJob = kotlinx.coroutines.GlobalScope.launch {
@@ -301,6 +307,44 @@ fun startContinuousAction(ctx: Context, key: String) {
             }
             kotlinx.coroutines.delay(50) // 50ms delay between actions
         }
+    }
+}
+
+@Composable
+fun IconKey(key: String, isSmallText: Boolean, iconSize: Dp) {
+    val icon = when (key) {
+        "←" -> R.drawable.delete_dark
+        "⏎" -> R.drawable.enter_dark
+        ":)" -> R.drawable.emoji_dark
+        "↑" -> R.drawable.arrow_top_dark
+        else -> null
+    }
+    icon?.let {
+        Icon(
+            painter = painterResource(id = it),
+            contentDescription = key,
+            tint = getKeyIconColor(),
+            modifier = Modifier.size(iconSize)
+        )
+    }
+}
+
+@Composable
+fun TextKey(key: String, isSmallText: Boolean, baseTextSize: TextUnit, smallTextSize: TextUnit) {
+    Text(
+        text = key,
+        fontSize = if (isSmallText) smallTextSize else baseTextSize,
+        color = getKeyTextColor(),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+fun handleLongKeyAction(ctx: Context, key: String) {
+    val service = ctx as? KeyboardService ?: return
+    if (key.contains("^")) {
+        val secondChar = key.split("^")[1]
+        service.currentInputConnection?.commitText(secondChar, secondChar.length)
     }
 }
 
