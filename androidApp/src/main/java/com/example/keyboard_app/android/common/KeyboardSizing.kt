@@ -99,7 +99,8 @@ object KeyboardSizing {
             else -> {
                 if (is_current) 24.sp else 20.sp
             }
-        }}
+        }
+    }
 
 
 
