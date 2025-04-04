@@ -1,11 +1,6 @@
 package com.example.keyboard_app.android.screens
-
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -157,7 +152,6 @@ fun StepItem(
         targetValue = if (isCurrent) CurrentBoxColor else Color.Transparent,
         animationSpec = tween(500)
     )
-
     val stepColor = animateColorAsState(
         targetValue = when {
             isCurrent -> CurrentBoxColor

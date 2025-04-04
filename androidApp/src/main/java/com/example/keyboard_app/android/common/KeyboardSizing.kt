@@ -26,13 +26,14 @@ object KeyboardSizing {
         return if (isPortrait) {
             (screenHeight * 0.07f).coerceIn(25.dp, 63.dp)
         } else {
-            (screenHeight * 0.06f).coerceIn(20.dp, 55.dp) // Adjust height for landscape
+            (screenHeight * 0.07f).coerceIn(20.dp, 55.dp) // Adjust height for landscape
         }
     }
 
     @Composable
     fun calculatekeyMargin(screenWidth: Dp, screenHeight: Dp): Dp {
-        return (screenWidth * 0.02f).coerceIn(2.dp, 20.dp)
+//        return (screenWidth * 0.02f).coerceIn(2.dp, 20.dp)
+        return 0.dp
     }
 
     @Composable
