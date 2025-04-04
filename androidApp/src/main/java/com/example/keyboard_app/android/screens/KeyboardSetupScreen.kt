@@ -2,6 +2,10 @@ package com.example.keyboard_app.android.screens
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -21,23 +25,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
 import com.example.keyboard_app.android.MainActivity
-import com.example.keyboard_app.android.common.KeyboardSizing.checkIslandscape
-import com.example.keyboard_app.android.common.KeyboardSizing.getSetupBoxCircleVerticalPadding
-import com.example.keyboard_app.android.common.KeyboardSizing.getSetupBoxCorner
-import com.example.keyboard_app.android.common.KeyboardSizing.getSetupBoxInternalPadding
-import com.example.keyboard_app.android.common.KeyboardSizing.getSetupBoxSize
-import com.example.keyboard_app.android.common.KeyboardSizing.getSetupMainTextSize
-import com.example.keyboard_app.android.common.KeyboardSizing.getSetupTitleTextSize
-import com.example.keyboard_app.android.common.KeyboardSizing.getintroboxcontentModifier
-import com.example.keyboard_app.android.common.KeyboardSizing.getintrobuttonModifier
-import com.example.keyboard_app.android.common.KeyboardSizing.getintrocontentModifier
 import com.example.keyboard_app.android.theming.CurrentBoxColor
 import com.example.keyboard_app.android.theming.DarkColorPrimary
 import com.example.keyboard_app.android.theming.SelectedCircleColor
@@ -47,129 +38,108 @@ import com.example.keyboard_app.android.theming.appName
 import com.goodwy.keyboard.lib.util.InputMethodUtils
 import com.goodwy.keyboard.lib.util.InputMethodUtils.showImeEnablerActivity
 import com.goodwy.keyboard.lib.util.InputMethodUtils.showImePicker
-import splitties.systemservices.wifiAwareManager
 
 @Composable
-fun KeyboardSetupScreen(context: Context, windowSizeClass: WindowWidthSizeClass) {
+fun KeyboardSetupScreen(context: Context) {
     var currentStep by remember { mutableStateOf(1) }
     val isFlorisBoardSelected by InputMethodUtils.observeIsKeyboardSelected(foregroundOnly = true)
     val isFlorisBoardEnabled by InputMethodUtils.observeIsKeyboardEnabled(foregroundOnly = true)
-
     LaunchedEffect(isFlorisBoardEnabled, isFlorisBoardSelected) {
         currentStep = when {
             isFlorisBoardEnabled && isFlorisBoardSelected -> 3
             isFlorisBoardEnabled -> 2
             else -> 1
         }
+        if (isFlorisBoardEnabled && currentStep == 2) {
+            val backIntent = Intent(context, MainActivity::class.java)
+            backIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            context.startActivity(backIntent)
+            Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+        }
+
     }
 
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkColorPrimary) // Apply background to the Box
-    )
-    {
-        if (checkIslandscape(windowSizeClass)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = getintrocontentModifier(windowSizeClass)
-                        .background(DarkColorPrimary)
-                        .animateContentSize(animationSpec = tween(500))
-                ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    StepItem(
-                        step = "1", title = "Enable",
-                        description = "${appName} Keyboard in your keyboard settings",
-                        isActive = currentStep > 1, isCurrent = currentStep == 1,
-                        windowSizeClass = windowSizeClass
-                    )
+            .background(DarkColorPrimary)
+            .padding(16.dp)
+            .animateContentSize(animationSpec = tween(500))  // Smooth content size animation
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
 
-                    StepItem(
-                        step = "2", title = "Select",
-                        description = "Select ${appName} Keyboard as your default",
-                        isActive = currentStep > 2, isCurrent = currentStep == 2,
-                        windowSizeClass = windowSizeClass
+        // Stepper animation
+        AnimatedVisibility(true) {
+            StepItem(
+                step = "1",
+                title = "Enable",
+                description = "${appName} Keyboard in your keyboard settings",
+                isActive = currentStep > 1,
+                isCurrent = currentStep == 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .animateContentSize()
+            )
+        }
 
-                    )
+        AnimatedVisibility(true) {
+            StepItem(
+                step = "2",
+                title = "Select",
+                description = "Select ${appName} Keyboard as your default",
+                isActive = currentStep > 2,
+                isCurrent = currentStep == 2,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .animateContentSize()
+            )
+        }
 
-                    StepItem(
-                        step = "3", title = "All done!",
-                        description = "You're all set with ${appName} Keyboard",
-                        isActive = currentStep > 3, isCurrent = currentStep == 3,
-                        windowSizeClass = windowSizeClass
+        AnimatedVisibility(true) {
+            StepItem(
+                step = "3",
+                title = "All done!",
+                description = "You're all set with ${appName} Keyboard",
+                isActive = currentStep > 3,
+                isCurrent = currentStep == 3,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .animateContentSize()
+            )
+        }
 
-                    )
+        Spacer(modifier = Modifier.weight(1f))
 
+        Button(
+            shape = MaterialTheme.shapes.medium,
+            onClick = {
+                if (currentStep == 1) {
+
+                    showImeEnablerActivity(context)
+                } else if (currentStep == 2) {
+                    showImePicker(context)
                 }
-                Spacer(modifier = Modifier.weight(1f))
-                Button(
-                    shape = MaterialTheme.shapes.medium,
-                    onClick = {
-                        if (currentStep == 1) showImeEnablerActivity(context)
-                        else if (currentStep == 2) showImePicker(context)
-                    },
-                    modifier = getintrobuttonModifier(windowSizeClass),
-                    colors = ButtonDefaults.buttonColors(containerColor = SetupButtonColor)
-                ) {
-                    Text(
-                        text = if (currentStep == 1) "Enable" else if (currentStep == 2) "Select" else "Start",
-                        fontSize = getSetupMainTextSize(windowSizeClass),
-                        color = Color.White
-                    )
-                }
-            }
-
-        } else {
-            Column(
-                modifier = getintrocontentModifier(windowSizeClass)
-                    .verticalScroll(rememberScrollState())
-                    .background(DarkColorPrimary)
-                    .animateContentSize(animationSpec = tween(500))
-            ) {
-                Spacer(modifier = Modifier.height(16.dp))
-                StepItem(
-                    step = "1", title = "Enable",
-                    description = "${appName} Keyboard in your keyboard settings",
-                    isActive = currentStep > 1, isCurrent = currentStep == 1,
-                    windowSizeClass = windowSizeClass
-                )
-
-                StepItem(
-                    step = "2", title = "Select",
-                    description = "Select ${appName} Keyboard as your default",
-                    isActive = currentStep > 2, isCurrent = currentStep == 2,
-                    windowSizeClass = windowSizeClass
-
-                )
-
-                StepItem(
-                    step = "3", title = "All done!",
-                    description = "You're all set with ${appName} Keyboard",
-                    isActive = currentStep > 3, isCurrent = currentStep == 3,
-                    windowSizeClass = windowSizeClass
-
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Button(
-                    shape = MaterialTheme.shapes.medium,
-                    onClick = {
-                        if (currentStep == 1) showImeEnablerActivity(context)
-                        else if (currentStep == 2) showImePicker(context)
-                    },
-                    modifier = getintrobuttonModifier(windowSizeClass),
-                    colors = ButtonDefaults.buttonColors(containerColor = SetupButtonColor)
-                ) {
-                    Text(
-                        text = if (currentStep == 1) "Enable" else if (currentStep == 2) "Select" else "Start",
-                        fontSize = getSetupMainTextSize(windowSizeClass),
-                        color = Color.White
-                    )
-                }
-            }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+                .animateContentSize(),  // Smooth button animation
+            colors = ButtonDefaults.buttonColors(containerColor = SetupButtonColor)
+        ) {
+            Text(
+                text = when (currentStep) {
+                    1 -> "Enable"
+                    2 -> "Select"
+                    3 -> "Start"
+                    else -> "Next"
+                },
+                fontSize = 18.sp,
+                color = Color.White
+            )
         }
     }
 }
@@ -181,7 +151,7 @@ fun StepItem(
     description: String,
     isActive: Boolean,
     isCurrent: Boolean,
-    windowSizeClass: WindowWidthSizeClass
+    modifier: Modifier = Modifier
 ) {
     val backgroundColor = animateColorAsState(
         targetValue = if (isCurrent) CurrentBoxColor else Color.Transparent,
@@ -205,60 +175,54 @@ fun StepItem(
         animationSpec = tween(500)
     )
 
-    Box(
-        modifier = getintroboxcontentModifier(windowSizeClass)
-            .background(
-                backgroundColor.value,
-                RoundedCornerShape(getSetupBoxCorner(windowSizeClass))
-            )
-    )
-    {
-        Column(
-            modifier = Modifier.padding(getSetupBoxInternalPadding(windowSizeClass))
+    Column(
+        modifier = modifier
+            .background(backgroundColor.value, RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(
+                    if (isCurrent) SelectedCircleColor else UnSelectedCircleColor,
+                    RoundedCornerShape(50)
+                )
+                .animateContentSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(vertical = getSetupBoxCircleVerticalPadding(windowSizeClass))
-                    .size(getSetupBoxSize(windowSizeClass))
-                    .background(
-                        if (isCurrent) SelectedCircleColor else UnSelectedCircleColor,
-                        RoundedCornerShape(50)
-                    )
-                    .animateContentSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isActive) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Check Icon",
-                        tint = stepColor.value
-                    )
-                } else {
-                    Text(
-                        text = step,
-                        color = stepColor.value,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-            Text(
-                text = title,
-                fontSize = getSetupTitleTextSize(isCurrent, windowSizeClass),
-                fontWeight = FontWeight.SemiBold,
-                color = textColor.value
-            )
-            if (isCurrent) {
+            if (isActive) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Check Icon",
+                    tint = stepColor.value
+                )
+            } else {
                 Text(
-                    text = description,
+                    text = step,
+                    color = stepColor.value,
                     fontSize = 16.sp,
-                    color = SelectedCircleColor,
-                    modifier = Modifier.padding(top = 4.dp)
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
+        Spacer(modifier = Modifier.height(5.dp))
+
+        Text(
+            text = title,
+            fontSize = if (isCurrent) 24.sp else 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = textColor.value
+        )
+
+        if (isCurrent) {
+            Text(
+                text = description,
+                fontSize = 16.sp,
+                color = SelectedCircleColor,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
     }
 }
-
 
 

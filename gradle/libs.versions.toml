@@ -18,6 +18,7 @@ foundationAndroid = "1.7.8"
 patrickgold-compose-tooltip = "0.1.0"
 patrickgold-jetpref = "0.2.0-beta03"
 coreKtxVersion = "1.9.0"
+adaptiveAndroid = "1.1.0"
 [libraries]
 patrickgold-jetpref-datastore-model = { module = "dev.patrickgold.jetpref:jetpref-datastore-model", version.ref = "patrickgold-jetpref" }
 patrickgold-jetpref-datastore-ui = { module = "dev.patrickgold.jetpref:jetpref-datastore-ui", version.ref = "patrickgold-jetpref" }
@@ -43,6 +44,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
 androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtxVersion" }
+androidx-adaptive-android = { group = "androidx.compose.material3.adaptive", name = "adaptive-android", version.ref = "adaptiveAndroid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

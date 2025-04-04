@@ -1,5 +1,5 @@
 package com.example.keyboard_app.android
-import android.app.Activity
+
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -20,7 +20,6 @@ import com.example.keyboard_app.android.theming.DevooTheme
 import com.goodwy.keyboard.lib.util.InputMethodUtils
 
 class MainActivity : ComponentActivity() {
-
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +33,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Composable
     fun StartScreen(context: Context) {
@@ -43,8 +42,7 @@ class MainActivity : ComponentActivity() {
         if (isKeyBoardEnabled && isKeyBoardSelected) {
             HomePageScreen()
         } else {
-            val windowSizeClass = calculateWindowSizeClass(LocalContext.current as Activity)
-            KeyboardSetupScreen(context = LocalContext.current, windowSizeClass = windowSizeClass.widthSizeClass)
+            KeyboardSetupScreen(context = LocalContext.current)
         }
     }
 }

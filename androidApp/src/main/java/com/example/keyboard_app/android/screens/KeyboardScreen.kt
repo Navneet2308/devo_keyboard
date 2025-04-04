@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -35,6 +37,9 @@ import androidx.compose.ui.unit.dp
 import com.example.keyboard_app.android.KeyboardService
 import com.example.keyboard_app.android.R
 import com.example.keyboard_app.android.common.KeyboardSizing
+import com.example.keyboard_app.android.common.KeyboardSizing.calculateTextSize
+import com.example.keyboard_app.android.common.KeyboardSizing.calculatekeyMargin
+import com.example.keyboard_app.android.common.KeyboardSizing.keyMargin
 import com.example.keyboard_app.android.utils.getBorderColor
 import com.example.keyboard_app.android.utils.getKeyColor
 import com.example.keyboard_app.android.utils.getKeyIconColor
@@ -53,13 +58,17 @@ fun KeyboardScreen(getKeys: () -> List<List<String>>) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
-    val keyHeight = KeyboardSizing.calculateKeyHeight(screenHeight)
+    val keyHeight = KeyboardSizing.calculateKeyHeight(screenHeight,screenWidth)
+    val keyboard_hor_padding = KeyboardSizing.calculateHorizontalPadding(screenWidth)
+    val keyboard_vertical_padding = KeyboardSizing.calculateVerticalPadding(screenHeight)
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val keyWidth = KeyboardSizing.calculateKeyWidth(screenWidth, keys.firstOrNull()?.size ?: 10)
     val adjustedKeyHeight = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        keyHeight * 1.3f
+        keyHeight * 1.6f
     } else {
         keyHeight
     }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,12 +82,15 @@ fun KeyboardScreen(getKeys: () -> List<List<String>>) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = KeyboardSizing.keyMargin),
-                    horizontalArrangement = Arrangement.spacedBy(KeyboardSizing.keyMargin)
+//                        .padding(vertical = keyboard_vertical_padding),
+//                    horizontalArrangement = Arrangement.spacedBy(keyboard_hor_padding)
                 ) {
                     val weights = calculateWeights(row)
+                    Spacer(modifier = Modifier.width(calculatekeyMargin(screenWidth, screenHeight)))
                     row.forEachIndexed { index, key ->
                         KeyboardKey(
+                            keyboard_hor_padding =keyboard_hor_padding ,
+                            keyboard_vertical_padding = keyboard_vertical_padding,
                             key = key,
                             modifier = Modifier
                                 .weight(weights[index])
@@ -86,6 +98,8 @@ fun KeyboardScreen(getKeys: () -> List<List<String>>) {
                                 .width(keyWidth)
                         )
                     }
+                    Spacer(modifier = Modifier.width(calculatekeyMargin(screenWidth, screenHeight)))
+
                 }
             }
         }
@@ -106,7 +120,7 @@ fun calculateWeights(row: List<String>, totalWeight: Float = 10f): List<Float> {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun KeyboardKey(key: String, modifier: Modifier = Modifier) {
+fun KeyboardKey(keyboard_hor_padding:Dp,keyboard_vertical_padding:Dp,key: String, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val configuration = LocalConfiguration.current
     var isKeyPressed by remember { mutableStateOf(false) }
@@ -127,11 +141,8 @@ fun KeyboardKey(key: String, modifier: Modifier = Modifier) {
     if (key.contains(" ")) {
         Spacer(modifier = modifier)
     } else {
-        Box(
+        Row(
             modifier = modifier
-                .clip(RoundedCornerShape(KeyboardSizing.keyCornerRadius))
-                .background(getKeyColor(isSpecial))
-                .scale(if (isKeyPressed) 0.95f else 1f)
                 .pointerInteropFilter { event ->
                     when (event.actionMasked) {
                         MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
@@ -163,6 +174,8 @@ fun KeyboardKey(key: String, modifier: Modifier = Modifier) {
                         }
 
                         MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                            isLongPressStarted = false
+                            isKeyPressed = false
                             val pointerId = event.getPointerId(event.actionIndex)
                             activePointers.remove(pointerId)
                             if (activePointers.isEmpty()) {
@@ -193,16 +206,27 @@ fun KeyboardKey(key: String, modifier: Modifier = Modifier) {
 
                         else -> false
                     }
+                },
+        )
+        {
+            Box(
+                modifier = modifier
+                    .padding(horizontal = keyboard_hor_padding, vertical = keyboard_vertical_padding)
+                    .clip(RoundedCornerShape(KeyboardSizing.keyCornerRadius))
+                    .background(getKeyColor(isSpecial))
+                    .scale(if (isKeyPressed) 0.95f else 1f)
+                    .border(1.dp, getBorderColor(), RoundedCornerShape(KeyboardSizing.keyCornerRadius)),
+                contentAlignment = Alignment.Center
+
+            ) {
+                when {
+                    key.contains("^") -> DualTextKey(key)  // Remove the size parameters
+                    key in listOf("←", "⏎", ":)", "↑") -> IconKey(key, isSmallText, iconSize)
+                    else -> TextKey(key, isSmallText, baseTextSize, smallTextSize)
                 }
-                .border(1.dp, getBorderColor(), RoundedCornerShape(KeyboardSizing.keyCornerRadius)),
-            contentAlignment = Alignment.Center
-        ) {
-            when {
-                key.contains("^") -> DualTextKey(key)  // Remove the size parameters
-                key in listOf("←", "⏎", ":)", "↑") -> IconKey(key, isSmallText, iconSize)
-                else -> TextKey(key, isSmallText, baseTextSize, smallTextSize)
             }
         }
+
     }
 }
 
@@ -257,23 +281,22 @@ fun DualTextKey(key: String) {
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
 
-    val (mainTextSize, secondaryTextSize) = KeyboardSizing.calculateDualTextSize(
-        screenWidth,
-        screenHeight
-    )
+
 
     Box(Modifier.fillMaxWidth().height(60.dp)) {
         Text(
             text = key.split("^")[1],
-            fontSize = secondaryTextSize,
+            fontSize = calculateTextSize(screenWidth, screenHeight, true),
             color = getKeyTextColor(),
+            fontWeight = FontWeight.Normal,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(4.dp)
         )
         Text(
             text = key.split("^")[0],
-            fontSize = mainTextSize,
+            fontSize = calculateTextSize(screenWidth, screenHeight, false),
+            fontWeight = FontWeight.SemiBold,
             color = getKeyTextColor(),
             modifier = Modifier.align(Alignment.Center)
         )
@@ -336,6 +359,7 @@ fun TextKey(key: String, isSmallText: Boolean, baseTextSize: TextUnit, smallText
         fontSize = if (isSmallText) smallTextSize else baseTextSize,
         color = getKeyTextColor(),
         maxLines = 1,
+        fontWeight = FontWeight.SemiBold,
         overflow = TextOverflow.Ellipsis
     )
 }

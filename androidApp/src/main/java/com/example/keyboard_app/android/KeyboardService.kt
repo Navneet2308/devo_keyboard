@@ -1,5 +1,7 @@
 package com.example.keyboard_app.android
 import android.view.View
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.*
 import androidx.savedstate.SavedStateRegistry
@@ -64,6 +66,9 @@ SavedStateRegistryOwner {
     }
 
     override fun onCreateInputView(): View {
+        _isCapsEnabled.value = false
+        _isNumberKeyboard.value = false
+        _isEmojiKeyboard.value = false
         keyboardView = ComposeKeyboardView(this, ::getKeys)
         window?.window?.decorView?.let { decorView ->
             decorView.setViewTreeLifecycleOwner(this)
@@ -74,6 +79,7 @@ SavedStateRegistryOwner {
 
     }
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate() {
         super.onCreate()
         savedStateRegistryController.performRestore(null)
