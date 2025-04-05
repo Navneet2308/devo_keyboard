@@ -59,6 +59,7 @@ import com.example.keyboard_app.android.utils.getLongPressKeyColor
 import com.example.keyboard_app.android.utils.short_vibrate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -147,7 +148,9 @@ fun KeyboardKey(
 
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
-
+    val activePointers = mutableMapOf<Int, String>()
+    val longPressJobs = mutableMapOf<Int, Job>()
+    val longPressFlags = mutableMapOf<Int, Boolean>()
     val isSpecial = key in listOf("language", "←", "⏎", ":)", "↑")
     val isSmallText = key.length > 3 || key == "English (United Sta..."
     val coroutineScope = rememberCoroutineScope()
@@ -156,12 +159,11 @@ fun KeyboardKey(
     val smallTextSize = KeyboardSizing.calculateTextSize(screenWidth, screenHeight, true)
     val iconSize = KeyboardSizing.calculateIconSize(screenWidth, screenHeight)
 
-    val scope = rememberCoroutineScope()
     var showPopup by remember { mutableStateOf(false) }
     fun triggerPopup() {
         showPopup = true
-        scope.launch {
-            delay(100)
+        coroutineScope.launch {
+            delay(50)
             showPopup = false
         }
     }
@@ -170,112 +172,106 @@ fun KeyboardKey(
     } else {
         Row(
             modifier = modifier
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val up = event.changes.firstOrNull { !it.pressed }
-                            if (up != null) {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    delay(timeMillis = 5)
-                                    isKeyPressed = false
-                                    isLongPressStarted = false
+//                .pointerInput(key) {
+//                    detectTapGestures(
+//                        onTap = {
+//                            isKeyPressed = true
+//                            coroutineScope.launch {
+//                                short_vibrate(ctx)
+//                                handleShortKeyAction(ctx, key)
+//                                isKeyPressed = false
+//                            }
+//                        },
+//                        onLongPress = {
+//                            isKeyPressed = true
+//                            isLongPressStarted = true
+//                            coroutineScope.launch {
+//                                short_vibrate(ctx)
+//                                handleLongKeyAction(ctx, key)
+//                                isKeyPressed = false
+//                                isLongPressStarted = false
+//                            }
+//                        }
+//                    )
+//                }
+
+
+
+            .pointerInteropFilter { event ->
+                val pointerId = event.getPointerId(event.actionIndex)
+
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                        activePointers[pointerId] = key
+                        isKeyPressed = true
+                        isLongPressStarted = false
+                        short_vibrate(ctx)
+
+                        // Cancel any existing job for this pointer
+                        longPressJobs[pointerId]?.cancel()
+
+                        // Launch new coroutine for long press detection
+                        val job = coroutineScope.launch {
+                            val delayTime = when {
+                                key.contains("^") -> 2000L
+                                key in listOf("←", "⏎", "language") -> 1000L
+                                else -> 500L
+                            }
+
+                            delay(delayTime)
+
+                            if (isKeyPressed && activePointers.containsKey(pointerId)) {
+                                isLongPressStarted = true
+                                if (key in listOf("←", "⏎", "language")) {
+                                    startContinuousAction(ctx, key)
+                                } else {
+                                    handleLongpressAction(ctx, key)
                                 }
                             }
                         }
+
+                        longPressJobs[pointerId] = job
+
+                        true
                     }
-                }
 
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                isKeyPressed = true
-                                isLongPressStarted = true
-                                short_vibrate(ctx)
-                                handleLongKeyAction(ctx, key)
-//                                handleLongKeyAction(ctx, key)
-//                                delay(timeMillis = 100)
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                        activePointers.remove(pointerId)
+                        longPressJobs[pointerId]?.cancel()
+                        longPressJobs.remove(pointerId)
 
-                            }
-                        },
-                        onTap = {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                isKeyPressed = true
-                                short_vibrate(ctx)
+                        val wasLongPress = isLongPressStarted
+                        isKeyPressed = false
+                        isLongPressStarted = false
+
+                        if (activePointers.isEmpty()) {
+                            if (!wasLongPress) {
                                 handleShortKeyAction(ctx, key)
-                                delay(timeMillis = 100)
-//                                isKeyPressed = false
                             }
+                            stopContinuousAction()
                         }
-                    )
+
+                        true
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
+                        isKeyPressed = false
+                        isLongPressStarted = false
+                        activePointers.clear()
+
+                        longPressJobs.values.forEach { it.cancel() }
+                        longPressJobs.clear()
+
+                        stopContinuousAction()
+                        true
+                    }
+
+                    else -> false
                 }
-//                .pointerInteropFilter { event ->
-//                    when (event.actionMasked) {
-//                        MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-//                            val pointerId = event.getPointerId(event.actionIndex)
-//                            activePointers[pointerId] = key
-//                            isKeyPressed = true
-//                            short_vibrate(ctx)
-//                            if (key.contains("^")) {
-//                                coroutineScope.launch {
-//                                    kotlinx.coroutines.delay(2000)
-//                                    if (isKeyPressed) {
-//                                        isLongPressStarted = true
-//                                        // handleLongKeyAction(ctx, key)
-//                                    }
-//                                }
-//                            } else if (key in listOf("←", "⏎", "language")) {
-//                                coroutineScope.launch {
-//                                    kotlinx.coroutines.delay(1000)
-//                                    if (isKeyPressed) {
-//                                        isLongPressStarted = true
-//                                        startContinuousAction(ctx, key)
-//                                    }
-//                                }
-//                            } else {
-//                                // handleKeyAction(ctx, key)
-//                            }
-//                            true
-//                        }
-//
-//                        MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
-//                            val pointerId = event.getPointerId(event.actionIndex)
-//                            activePointers.remove(pointerId)
-//                            if (activePointers.isEmpty()) {
-//                                if (key.contains("^") ) {
-//                                    if (isLongPressStarted) {
-//                                        handleLongKeyAction(ctx, key)
-//                                    } else {
-//                                        handleShortPressAction(ctx, key)
-//
-//                                    }
-//                                } else if (key in listOf(
-//                                        "←",
-//                                        "⏎",
-//                                        "language"
-//                                    ) && !isLongPressStarted
-//                                ) {
-//                                    handleKeyAction(ctx, key)
-//                                }
-//                                isKeyPressed = false
-//                                isLongPressStarted = false
-//                                stopContinuousAction()
-//                            }
-//                            true
-//                        }
-//
-//                        MotionEvent.ACTION_CANCEL -> {
-//                            activePointers.clear()
-//                            isKeyPressed = false
-//                            isLongPressStarted = false
-//                            stopContinuousAction()
-//                            true
-//                        }
-//
-//                        else -> false
-//                    }
-//                },
+            }
+
+
+
         )
         {
             Box(
@@ -294,7 +290,7 @@ fun KeyboardKey(
                 contentAlignment = Alignment.Center
 
             ) {
-                if (isKeyPressed) {
+                if (isKeyPressed && key.contains("^")) {
                     triggerPopup()
                 }
                 if (showPopup) {
@@ -356,32 +352,40 @@ fun handleShortPressAction(ctx: Context, key: String) {
         service.currentInputConnection?.commitText(firstChar, firstChar.length)
     }
 }
+
 fun handleLongKeyAction(ctx: Context, key: String) {
     val service = ctx as? KeyboardService ?: return
     when {
         key == "←" -> {
             service.currentInputConnection?.deleteSurroundingText(1, 0)
         }
+
         key == "⏎" -> {
             service.currentInputConnection?.sendKeyEvent(
                 KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)
             )
         }
+
         key == ":)" -> {
             service.switchToEmojiKeyboard()
         }
+
         key == "↑" -> {
             service.toggleCaps()
         }
+
         key == "language" -> {
             service.currentInputConnection?.commitText(" ", 1)
         }
+
         key == "?1#" -> {
             service.switchToNumberKeyboard()
         }
+
         key.contains("^") -> {
             handleLongpressAction(ctx, key)
         }
+
         else -> {
             val textToCommit = if (service.isCapsEnabled) key.uppercase() else key.lowercase()
             service.currentInputConnection?.commitText(textToCommit, textToCommit.length)
@@ -391,28 +395,34 @@ fun handleLongKeyAction(ctx: Context, key: String) {
 
 fun handleShortKeyAction(ctx: Context, key: String) {
     val service = ctx as? KeyboardService ?: return
-    when  {
-       key == "←" -> {
+    when {
+        key == "←" -> {
             service.currentInputConnection?.deleteSurroundingText(1, 0)
         }
-        key ==   "⏎" -> {
+
+        key == "⏎" -> {
             service.currentInputConnection?.sendKeyEvent(
                 KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)
             )
         }
-        key ==   ":)" -> {
+
+        key == ":)" -> {
             service.switchToEmojiKeyboard()
         }
-        key ==   "↑" -> service.toggleCaps()
-        key ==  "language" -> {
+
+        key == "↑" -> service.toggleCaps()
+        key == "language" -> {
             service.currentInputConnection?.commitText(" ", 1)
         }
-        key ==  "?1#" -> {
+
+        key == "?1#" -> {
             service.switchToNumberKeyboard()
         }
+
         key.contains("^") -> {
             handleShortPressAction(ctx, key)
         }
+
         else -> {
             val textToCommit = if (service.isCapsEnabled) key.uppercase() else key.lowercase()
             service.currentInputConnection?.commitText(textToCommit, textToCommit.length)
