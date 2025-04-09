@@ -130,7 +130,7 @@ fun KeyboardKey(
                         if (!activePointers.containsKey(pointerId)) {
                             isPressed = true
                             showPopup = true
-                            isLongPress = false // Reset long press state
+                            isLongPress = false
                             short_vibrate(ctx)
                             handleShortKeyAction(ctx, key) // Trigger short press immediately
                             activePointers[pointerId] = coroutineScope.launch {
@@ -194,8 +194,8 @@ fun KeyboardKey(
                             CircleShape
                         )
                         .padding(
-                            horizontal = if (isLongPress) 12.dp else 8.dp, // Smaller padding for short press
-                            vertical = if (isLongPress) 8.dp else 6.dp
+                            horizontal = if (isLongPress) 20.dp else 20.dp,
+                            vertical = if (isLongPress) 20.dp else 20.dp
                         ),
                     contentAlignment = Alignment.Center
                 ) {
