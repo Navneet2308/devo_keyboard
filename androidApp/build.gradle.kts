@@ -63,7 +63,6 @@ dependencies {
     implementation ("com.louiscad.splitties:splitties-views:3.0.0")
     implementation("com.google.accompanist:accompanist-flowlayout:0.32.0")
     implementation("androidx.compose.material3:material3-window-size-class:1.2.0")
-
     implementation(libs.core.ktx)
     implementation(libs.androidx.adaptive.android)
 

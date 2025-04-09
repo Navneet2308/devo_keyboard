@@ -24,7 +24,7 @@ object KeyboardSizing {
         val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
         return if (isPortrait) {
-            (screenHeight * 0.07f).coerceIn(25.dp, 63.dp)
+            (screenHeight * 0.065f).coerceIn(25.dp, 63.dp)
         } else {
             (screenHeight * 0.07f).coerceIn(20.dp, 55.dp) // Adjust height for landscape
         }
@@ -44,7 +44,7 @@ object KeyboardSizing {
 
     @Composable
     fun calculateVerticalPadding(screenHeight: Dp): Dp {
-        return (screenHeight * 0.0025f).coerceIn(1.dp, 3.dp)
+        return (screenHeight * 0.0030f).coerceIn(1.dp, 3.dp)
     }
 
 
@@ -55,11 +55,10 @@ object KeyboardSizing {
 
     @Composable
     fun calculateTextSize(screenWidth: Dp, screenHeight: Dp, isSmall: Boolean = false): TextUnit {
-        val widthFactor = screenWidth.value * 0.045f  // Increased to 4.5% of screen width
-        val heightFactor = screenHeight.value * 0.03f // Increased to 3% of screen height
+        val widthFactor = screenWidth.value * 0.065f
+        val heightFactor = screenHeight.value * 0.05f
         val baseSize = maxOf(minOf(widthFactor, heightFactor, 22f), 14f).sp  // Ensures text is between 14.sp and 22.sp
-
-        return if (isSmall) (baseSize * 0.70f) else baseSize
+        return if (isSmall) (baseSize * 0.45f) else baseSize
     }
     @Composable
     fun calculateIconSize(screenWidth: Dp, screenHeight: Dp): Dp {

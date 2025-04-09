@@ -42,7 +42,7 @@ fun getKeyTextColor(): Color {
     val isDarkMode = isSystemInDarkTheme()
     return when {
         isDarkMode -> Color.White
-        else -> Color(0xFF555555)
+        else -> Color(0xFF000000)
     }
 }
 
@@ -60,7 +60,7 @@ fun getKeyIconColor(): Color {
     val isDarkMode = isSystemInDarkTheme()
     return when {
         isDarkMode -> Color.White
-        else -> Color(0xFF555555)
+        else -> Color(0xFF000000)
     }
 }
 

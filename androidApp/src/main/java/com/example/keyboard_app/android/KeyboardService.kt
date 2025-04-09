@@ -1,4 +1,5 @@
 package com.example.keyboard_app.android
+
 import android.view.View
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -11,20 +12,28 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.keyboard_app.android.screens.ComposeKeyboardView
 
 class KeyboardService : LifecycleInputMethodService(),
-ViewModelStoreOwner,
-SavedStateRegistryOwner {
+    ViewModelStoreOwner,
+    SavedStateRegistryOwner {
     private var keyboardView: View? = null
     private val _isCapsEnabled = mutableStateOf(false)
     private val _isNumberKeyboard = mutableStateOf(false)
+
+    val isNumberKeyboard: Boolean
+        get() = _isNumberKeyboard.value
+
     val _isEmojiKeyboard = mutableStateOf(false)
     val isCapsEnabled: Boolean
         get() = _isCapsEnabled.value
+
+    val isEmojiKeyboard: Boolean
+        get() = _isEmojiKeyboard.value
 
     fun getKeys(): List<List<String>> =
         when {
             _isEmojiKeyboard.value -> {
                 emptyList()
             }
+
             _isNumberKeyboard.value -> {
                 listOf(
                     listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
@@ -33,6 +42,7 @@ SavedStateRegistryOwner {
                     listOf("?1#", ":)", ",", "language", ".", "⏎")
                 )
             }
+
             _isCapsEnabled.value == true -> {
                 listOf(
                     listOf("Q^1", "W^2", "E^3", "R^4", "T^5", "Y^6", "U^7", "I^8", "O^9", "P^0"),
@@ -41,6 +51,7 @@ SavedStateRegistryOwner {
                     listOf("?1#", ":)", ",", "language", ".", "⏎")
                 )
             }
+
             else -> {
                 listOf(
                     listOf("q^1", "w^2", "e^3", "r^4", "t^5", "y^6", "u^7", "i^8", "o^9", "p^0"),
@@ -52,7 +63,7 @@ SavedStateRegistryOwner {
         }
 
     fun toggleCaps() {
-        _isCapsEnabled.value = !(_isCapsEnabled.value ?: false)
+        _isCapsEnabled.value = _isCapsEnabled.value.not()
     }
 
     fun switchToNumberKeyboard() {
@@ -66,9 +77,7 @@ SavedStateRegistryOwner {
     }
 
     override fun onCreateInputView(): View {
-        _isCapsEnabled.value = false
-        _isNumberKeyboard.value = false
-        _isEmojiKeyboard.value = false
+        resetKeyboardState()
         keyboardView = ComposeKeyboardView(this, ::getKeys)
         window?.window?.decorView?.let { decorView ->
             decorView.setViewTreeLifecycleOwner(this)
@@ -77,6 +86,12 @@ SavedStateRegistryOwner {
         }
         return keyboardView!!
 
+    }
+
+    private fun resetKeyboardState() {
+        _isCapsEnabled.value = false
+        _isNumberKeyboard.value = false
+        _isEmojiKeyboard.value = false
     }
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
