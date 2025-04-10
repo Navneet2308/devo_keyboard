@@ -3,12 +3,12 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.AbstractComposeView
 
+
 class ComposeKeyboardView(
-    context: Context,
-    private val getKeys: () -> List<List<String>>
+    context: Context
 ) : AbstractComposeView(context) {
     @Composable
     override fun Content() {
-        KeyboardScreen(getKeys)
+        KeyboardScreen()
     }
 }

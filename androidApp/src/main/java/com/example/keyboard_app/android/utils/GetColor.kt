@@ -17,6 +17,7 @@ fun getKeyColor(isSpecial: Boolean): Color {
     }
 }
 
+
 @Composable
 fun getLongPressKeyColor(): Color {
     val isDarkMode = isSystemInDarkTheme()

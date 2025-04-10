@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Handler
+import androidx.emoji2.bundled.BundledEmojiCompatConfig
+import androidx.emoji2.text.EmojiCompat
 
 import com.goodwy.lib.kotlin.tryOrNull
 import java.lang.ref.WeakReference
@@ -14,6 +16,11 @@ private var FlorisApplicationReference = WeakReference<DevooApplication?>(null)
 class DevooApplication : Application() {
     private val mainHandler by lazy { Handler(mainLooper) }
 
+    override fun onCreate() {
+        super.onCreate()
+        val config = BundledEmojiCompatConfig(this)
+        EmojiCompat.init(config)
+    }
 
 
 }

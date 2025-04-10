@@ -18,40 +18,37 @@ object KeyboardSizing {
 
     val keyMargin = 2.dp
 
-    @Composable
-    fun calculateKeyHeight(screenHeight: Dp, screenWidth: Dp): Dp {
-        val configuration = LocalConfiguration.current
-        val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
-        return if (isPortrait) {
+    fun calculateKeyHeight(screenHeight: Dp, orientation: Int): Dp {
+        return if (orientation == Configuration.ORIENTATION_PORTRAIT) {
             (screenHeight * 0.065f).coerceIn(25.dp, 63.dp)
         } else {
-            (screenHeight * 0.07f).coerceIn(20.dp, 55.dp) // Adjust height for landscape
+            (screenHeight * 0.07f).coerceIn(20.dp, 55.dp)
         }
     }
 
-    @Composable
+
+
+
+    fun calculateKeyWidth(screenWidth: Dp, rowSize: Int): Dp {
+        return (screenWidth / rowSize) - (keyMargin * 2)
+    }
+
     fun calculatekeyMargin(screenWidth: Dp, screenHeight: Dp): Dp {
 //        return (screenWidth * 0.02f).coerceIn(2.dp, 20.dp)
         return 0.dp
     }
 
-    @Composable
     fun calculateHorizontalPadding(screenWidth: Dp): Dp {
         return (screenWidth * 0.005f).coerceIn(1.dp, 3.dp)
     }
 
 
-    @Composable
     fun calculateVerticalPadding(screenHeight: Dp): Dp {
-        return (screenHeight * 0.0030f).coerceIn(1.dp, 3.dp)
+        return (screenHeight * 0.0060f).coerceIn(1.dp, 4.dp)
     }
 
 
-    @Composable
-    fun calculateKeyWidth(screenWidth: Dp, rowSize: Int): Dp {
-        return (screenWidth / rowSize) - (keyMargin * 2)
-    }
 
     @Composable
     fun calculateTextSize(screenWidth: Dp, screenHeight: Dp, isSmall: Boolean = false): TextUnit {

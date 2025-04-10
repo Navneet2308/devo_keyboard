@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.keyboard_app.android.R
+import com.example.keyboard_app.android.ime.KeyboardType
 
 
 object Key {
@@ -122,12 +123,13 @@ object Key {
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
             listOf(" ", "@", "#", "$", "%", "&", "-", "+", "(", ")", " "),
             listOf("↑", "*", "'", ":", ";", "!", "?", "←"),
-            listOf("?1#", ":)", ",", "language", ".", "⏎")
+            listOf("ABC", ":)", ",", "language", ".", "⏎")
         )
     }
 
-     fun getAlphabetKeys(isCapsEnabled:Boolean): List<List<String>> {
-        return if (isCapsEnabled) {
+
+     fun getAlphabetKeys(isFirstCapsEnabled:Boolean,isCapsEnabled:Boolean): List<List<String>> {
+        return if (isCapsEnabled||isFirstCapsEnabled) {
             listOf(
                 listOf("Q^1", "W^2", "E^3", "R^4", "T^5", "Y^6", "U^7", "I^8", "O^9", "P^0"),
                 listOf(" ", "A^@", "S^#", "D^$", "F^%", "G^&", "H^-", "J^+", "K^(", "L^)", " "),
@@ -144,4 +146,11 @@ object Key {
         }
     }
 
+    fun getKeyboardKeys(isFirstCapsEnabled : Boolean,isCapsEnabled : Boolean,type: KeyboardType): List<List<String>> {
+        return when (type) {
+            KeyboardType.LETTERS -> getAlphabetKeys(isFirstCapsEnabled,isCapsEnabled)
+            KeyboardType.NUMBERS -> getNumberKeys()
+            KeyboardType.EMOJI -> emptyList() // Handled by EmojiKeyboard
+        }
+    }
 }

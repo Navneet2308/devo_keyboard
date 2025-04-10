@@ -4,13 +4,9 @@ import android.content.Context
 import android.content.res.Configuration
 import android.view.KeyEvent
 import android.view.MotionEvent
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -26,10 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -64,7 +58,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @Composable
-fun KeyboardScreen() {
+fun KeyboardScreen2() {
 
     var keyboardType by remember { mutableStateOf(KeyboardType.LETTERS) }
     val service = LocalContext.current as? KeyboardService ?: return
@@ -113,13 +107,12 @@ fun KeyboardScreen() {
                 keyboardType = newType
             })
 
-
             KeyboardType.LETTERS, KeyboardType.NUMBERS -> {
                 keys.forEach { row ->
                     Row(Modifier.fillMaxWidth()) {
                         Spacer(Modifier.width(calculatekeyMargin(screenWidth, screenHeight)))
                         row.forEachIndexed { index, key ->
-                            KeyboardKey(
+                            KeyboardKey2(
                                 keyboardType = keyboardType,
                                 key = key,
                                 horPadding = horPadding,
@@ -143,8 +136,9 @@ fun KeyboardScreen() {
 
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun KeyboardKey(
+fun KeyboardKey2(
     keyboardType: KeyboardType,
     key: String,
     horPadding: Dp,
@@ -156,60 +150,72 @@ fun KeyboardKey(
     val config = LocalConfiguration.current
     var isPressed by remember { mutableStateOf(false) }
     var showPopup by remember { mutableStateOf(false) }
-    var isLongPressActive by remember { mutableStateOf(false) }
+    var isLongPress by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val activePointers = remember { mutableMapOf<Int, Job>() }
     val isSpecial = key in listOf("language", "←", "⏎", ":)", "↑")
     val textSize = KeyboardSizing.calculateTextSize(
         config.screenWidthDp.dp,
         config.screenHeightDp.dp,
         key.length > 3
     )
-
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = tween(durationMillis = 50)
-    )
-
     Box(
         modifier = modifier
-            .scale(scale)
-            .pointerInput(keyboardType) {
-                detectTapGestures(
-                    onPress = { event ->
-                        isPressed = true
-                        showPopup = true
-                        short_vibrate(ctx)
-                        val job = coroutineScope.launch {
-                            delay(400L)
-                            if (isPressed) {
-                                isLongPressActive = true
-                                when (key) {
-                                    in listOf("←", "⏎", "language") -> startContinuousAction(ctx, key)
-                                    else -> handleLongPress(ctx, key)
+            .pointerInteropFilter { event ->
+                val pointerId = event.getPointerId(event.actionIndex)
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                        if (!activePointers.containsKey(pointerId)) {
+                            isPressed = true
+                            showPopup = true
+                            isLongPress = false
+                            short_vibrate(ctx)
+                            handleShortKeyAction(keyboardType, ctx, key, onKeyboardTypeChange)
+                            activePointers[pointerId] = coroutineScope.launch {
+                                delay(900L)
+                                if (isPressed && activePointers.containsKey(pointerId)) {
+                                    isLongPress = true
+                                    when (key) {
+                                        in listOf(
+                                            "←",
+                                            "⏎",
+                                            "language"
+                                        ) -> startContinuousAction(ctx, key)
+
+                                        else -> handleLongPress(ctx, key)
+                                    }
                                 }
                             }
                         }
-                        tryAwaitRelease() // Wait for release
-                        job.cancel() // Cancel long press detection
-                        if (isLongPressActive) {
-                            stopContinuousAction()
-                            isLongPressActive = false
-                        }
+                        true
+                    }
+
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                        activePointers.remove(pointerId)?.cancel()
+                        isPressed = activePointers.isNotEmpty()
+//                        showPopup = activePointers.isNotEmpty()
+//                        isLongPress = activePointers.isNotEmpty() && isLongPress
+                        if (activePointers.isEmpty()) stopContinuousAction()
+                        true
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
                         isPressed = false
-                        showPopup = false
-                        handleShortKeyAction(keyboardType, ctx, key, onKeyboardTypeChange)
+//                        showPopup = false
+//                        isLongPress = false
+                        activePointers.values.forEach { it.cancel() }
+                        activePointers.clear()
+                        stopContinuousAction()
+                        true
+                    }
 
-                    },
-                    onTap = {
-
-                    } // Empty, as action is handled in onPress
-                )
+                    else -> false
+                }
             }
             .padding(horizontal = horPadding, vertical = vertPadding)
             .clip(RoundedCornerShape(KeyboardSizing.keyCornerRadius))
             .background(
                 when {
-                    isPressed -> Color.Gray.copy(alpha = 0.5f) // Change color when pressed
                     key == "↑" && (ctx.isCapsEnabled.value || ctx.isNextLetterCaps.value) -> getKeyPopupTextColor()
                     else -> getKeyColor(isSpecial)
                 }
@@ -217,43 +223,46 @@ fun KeyboardKey(
             .border(1.dp, getBorderColor(), RoundedCornerShape(KeyboardSizing.keyCornerRadius)),
         contentAlignment = Alignment.Center
     ) {
+        // Key content based on the key type
         when {
-            key == " " -> Spacer(modifier = Modifier)
+            key == " " -> Spacer(modifier = Modifier) // Space key case
             key.contains("^") -> DualTextKey(key, config.screenWidthDp.dp, config.screenHeightDp.dp)
             isSpecial && key != "language" -> IconKey(key)
             else -> TextKey(key, textSize)
         }
 
+        // Popup for tapped key
         if (showPopup) {
             Popup(
                 alignment = Alignment.TopCenter,
                 offset = IntOffset(0, -80),
-                onDismissRequest = {}
+                onDismissRequest = { }
             ) {
                 Box(
                     modifier = Modifier
                         .shadow(4.dp, CircleShape)
                         .background(
-                            if (isLongPressActive) DarkColorPrimary else getKeyColor(isSpecial),
+                            if (isLongPress) DarkColorPrimary else getKeyColor(isSpecial),
                             CircleShape
                         )
                         .padding(
-                            horizontal = if (isLongPressActive) 20.dp else 20.dp,
-                            vertical = if (isLongPressActive) 20.dp else 20.dp
+                            horizontal = if (isLongPress) 20.dp else 20.dp,
+                            vertical = if (isLongPress) 20.dp else 20.dp
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     when {
                         key.contains("^") -> Text(
-                            text = if (isLongPressActive) key.split("^")[1] else key.split("^")[0],
-                            fontSize = if (isLongPressActive) 20.sp else 18.sp,
+                            text = if (isLongPress) key.split("^")[1] else key.split("^")[0],
+                            fontSize = if (isLongPress) 20.sp else 18.sp,
                             color = getKeyTextColor(),
                             fontWeight = FontWeight.Bold
                         )
+
                         isSpecial && key != "language" -> IconKey(key)
                         else -> Text(
                             text = key,
-                            fontSize = if (isLongPressActive) 20.sp else 18.sp,
+                            fontSize = if (isLongPress) 20.sp else 18.sp,
                             color = getKeyTextColor(),
                             fontWeight = FontWeight.Bold
                         )
@@ -263,9 +272,10 @@ fun KeyboardKey(
         }
     }
 }
+
 private fun calculateWeights(row: List<String>): List<Float> {
     val specialWeights =
-        mapOf("language" to 3.5f, "?1#" to 1.5f,"ABC" to 1.5f, " " to 0.5f, "⏎" to 2f, "↑" to 1.5f, "←" to 1.5f)
+        mapOf("language" to 3.5f, "?1#" to 1.5f, " " to 0.5f, "⏎" to 2f, "↑" to 1.5f, "←" to 1.5f)
     val specialWeightSum = row.sumOf { specialWeights[it]?.toDouble() ?: 0.0 }.toFloat()
     val normalWeight = (10f - specialWeightSum) / (row.count { it !in specialWeights })
     return row.map { specialWeights[it] ?: normalWeight }
@@ -277,7 +287,6 @@ private fun handleShortKeyAction(
     key: String,
     onKeyboardTypeChange: (KeyboardType) -> Unit
 ) {
-    println("Key pressed: $key, Current type: $keyboardType") // Debug log
     when (key) {
         "←" -> ctx.currentInputConnection?.deleteSurroundingText(1, 0)
         "⏎" -> ctx.currentInputConnection?.sendKeyEvent(
@@ -286,28 +295,36 @@ private fun handleShortKeyAction(
                 KeyEvent.KEYCODE_ENTER
             )
         )
+
         ":)" -> onKeyboardTypeChange(KeyboardType.EMOJI)
-        "↑" -> ctx.toggleCaps()
+        "↑" -> {
+            ctx.toggleCaps()
+//            onKeyboardTypeChange(keyboardType)
+        }
+
         "language" -> ctx.currentInputConnection?.commitText(" ", 1)
         "?1#" -> {
-            onKeyboardTypeChange(KeyboardType.NUMBERS)
-        }
-        "ABC" -> {
-            onKeyboardTypeChange(KeyboardType.LETTERS)
-        }
-        else -> {
-            if (keyboardType == KeyboardType.NUMBERS) {
-                ctx.currentInputConnection?.commitText(key, key.length)
+            val newType = if (keyboardType == KeyboardType.NUMBERS) {
+                KeyboardType.LETTERS
+            } else if (keyboardType == KeyboardType.EMOJI) {
+                KeyboardType.LETTERS
             } else {
-                val text = if (key.contains("^")) key.split("^")[0] else key
-                ctx.currentInputConnection?.commitText(
-                    if (ctx.isCapsEnabled.value || ctx.isNextLetterCaps.value) text.uppercase() else text.lowercase(),
-                    text.length
-                )
-                if (!key.contains("↑")) {
-                    ctx.changeNextLetterCaps()
-                }
+                KeyboardType.NUMBERS
             }
+            onKeyboardTypeChange(newType)
+        }
+
+        else -> {
+            val text = if (key.contains("^")) key.split("^")[0] else key
+            ctx.currentInputConnection?.commitText(
+                if (ctx.isCapsEnabled.value || ctx.isNextLetterCaps.value) text.uppercase() else text.lowercase(),
+                text.length
+            )
+            if (!key.contains("↑")) {
+                ctx.changeNextLetterCaps()
+            }
+
+
         }
     }
 }
@@ -376,7 +393,6 @@ private val continuousActions = mutableMapOf<String, Job>()
 private fun startContinuousAction(ctx: KeyboardService, key: String) {
     continuousActions[key]?.cancel()
     continuousActions[key] = GlobalScope.launch {
-        var repeatDelay = 200L // Initial delay
         while (isActive) {
             when (key) {
                 "←" -> ctx.currentInputConnection?.deleteSurroundingText(1, 0)
@@ -389,8 +405,7 @@ private fun startContinuousAction(ctx: KeyboardService, key: String) {
 
                 "language" -> ctx.currentInputConnection?.commitText(" ", 1)
             }
-            delay(repeatDelay)
-            repeatDelay = 50L // Faster repeat rate after initial delay
+            delay(30)
         }
     }
 }

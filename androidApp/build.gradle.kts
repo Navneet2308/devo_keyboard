@@ -13,7 +13,7 @@ android {
     defaultConfig {
         applicationId = "com.example.keyboard_app.android"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
@@ -63,6 +63,8 @@ dependencies {
     implementation ("com.louiscad.splitties:splitties-views:3.0.0")
     implementation("com.google.accompanist:accompanist-flowlayout:0.32.0")
     implementation("androidx.compose.material3:material3-window-size-class:1.2.0")
+    implementation ("androidx.emoji2:emoji2:1.4.0")
+    implementation ("androidx.emoji2:emoji2-bundled:1.4.0")
     implementation(libs.core.ktx)
     implementation(libs.androidx.adaptive.android)
 
