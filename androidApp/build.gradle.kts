@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-//    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -51,6 +50,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json.v160)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.datastore.core)
+
     // JetPref Datastore module
     implementation(project(":lib:android"))
     implementation(project(":lib:kotlin"))

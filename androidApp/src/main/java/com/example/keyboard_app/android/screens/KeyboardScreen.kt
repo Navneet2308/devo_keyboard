@@ -117,7 +117,6 @@ fun KeyboardScreen() {
                 keyboardType = newType
             })
 
-
             KeyboardType.LETTERS, KeyboardType.NUMBERS2, KeyboardType.NUMBERS -> {
                 keys.forEach { row ->
                     Row(Modifier.fillMaxWidth()) {
@@ -173,7 +172,10 @@ fun KeyboardKey(
         targetValue = if (isPressed) 0.95f else 1f,
         animationSpec = tween(durationMillis = 50)
     )
-
+    if (key == " ") {
+        Spacer(modifier = modifier)
+        return
+    }
     Box(
         modifier = modifier
             .scale(scale)
@@ -183,8 +185,8 @@ fun KeyboardKey(
                         isPressed = true
                         showPopup = true
                         short_vibrate(ctx)
-                        val job = coroutineScope.launch {
-                            delay(400L)
+                        val longPressJob = coroutineScope.launch {
+                            delay(300L)  // Reduced from 400ms for faster response
                             if (isPressed) {
                                 isLongPressActive = true
                                 when (key) {
@@ -197,16 +199,20 @@ fun KeyboardKey(
                                 }
                             }
                         }
+
                         tryAwaitRelease()
-                        job.cancel()
+                        longPressJob.cancel()
+
                         if (isLongPressActive) {
                             stopContinuousAction()
                             isLongPressActive = false
+                        } else {
+                            handleShortKeyAction(keyboardType, ctx, key, onKeyboardTypeChange)
                         }
+
+                        // Reset states
                         isPressed = false
                         showPopup = false
-                        handleShortKeyAction(keyboardType, ctx, key, onKeyboardTypeChange)
-
                     }
                 )
             }
@@ -223,7 +229,6 @@ fun KeyboardKey(
         contentAlignment = Alignment.Center
     ) {
         when {
-            key == " " -> Spacer(modifier = Modifier)
             key.contains("^") -> DualTextKey(key, config.screenWidthDp.dp, config.screenHeightDp.dp)
             isSpecial && key != "language" -> IconKey(key)
             else -> TextKey(key, textSize)

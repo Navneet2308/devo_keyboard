@@ -35,17 +35,16 @@ object KeyboardSizing {
     }
 
     fun calculatekeyMargin(screenWidth: Dp, screenHeight: Dp): Dp {
-//        return (screenWidth * 0.02f).coerceIn(2.dp, 20.dp)
         return 0.dp
     }
 
     fun calculateHorizontalPadding(screenWidth: Dp): Dp {
-        return (screenWidth * 0.005f).coerceIn(1.dp, 3.dp)
+        return (screenWidth * 0.002f).coerceIn(1.dp, 3.dp)
     }
 
 
     fun calculateVerticalPadding(screenHeight: Dp): Dp {
-        return (screenHeight * 0.0060f).coerceIn(1.dp, 4.dp)
+        return (screenHeight * 0.002f).coerceIn(1.dp, 3.dp)
     }
 
 
@@ -62,9 +61,5 @@ object KeyboardSizing {
         return (screenWidth * 0.06f).coerceAtMost(24.dp)
     }
 
-    @Composable
-    fun calculateDualTextSize(screenWidth: Dp, screenHeight: Dp): Pair<TextUnit, TextUnit> {
-        val baseSize = calculateTextSize(screenWidth, screenHeight)
-        return Pair(baseSize, baseSize * 0.6f)
-    }
+
 }
