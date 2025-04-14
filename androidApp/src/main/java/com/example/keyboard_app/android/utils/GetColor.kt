@@ -39,11 +39,12 @@ fun getKeyboardBG(): Color {
 }
 
 @Composable
-fun getKeyTextColor(): Color {
+fun getKeyTextColor(islongpress: Boolean = false): Color {
     val isDarkMode = isSystemInDarkTheme()
     return when {
+        islongpress -> Color.White
         isDarkMode -> Color.White
-        else -> Color(0xFF000000)
+        else -> Color(0xFF000000) // Black for light mode
     }
 }
 

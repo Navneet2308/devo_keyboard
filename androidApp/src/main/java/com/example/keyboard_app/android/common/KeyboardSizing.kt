@@ -52,10 +52,10 @@ object KeyboardSizing {
 
     @Composable
     fun calculateTextSize(screenWidth: Dp, screenHeight: Dp, isSmall: Boolean = false): TextUnit {
-        val widthFactor = screenWidth.value * 0.065f
-        val heightFactor = screenHeight.value * 0.05f
-        val baseSize = maxOf(minOf(widthFactor, heightFactor, 22f), 14f).sp  // Ensures text is between 14.sp and 22.sp
-        return if (isSmall) (baseSize * 0.45f) else baseSize
+        val widthFactor = screenWidth.value * 0.060f
+        val heightFactor = screenHeight.value * 0.04f
+        val baseSize = maxOf(minOf(widthFactor, heightFactor, 20f), 12f).sp  // Ensures text is between 14.sp and 22.sp
+        return if (isSmall) (baseSize * 0.55f) else baseSize
     }
     @Composable
     fun calculateIconSize(screenWidth: Dp, screenHeight: Dp): Dp {
