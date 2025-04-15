@@ -1,9 +1,12 @@
 package com.example.keyboard_app.android
 
+import android.text.InputType
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputConnectionWrapper
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.*
 import androidx.savedstate.SavedStateRegistry
@@ -13,14 +16,19 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.keyboard_app.android.screens.ComposeKeyboardView
 import com.example.keyboard_app.android.utils.short_vibrate
 import androidx.compose.runtime.State
+import com.example.keyboard_app.android.ime.KeyboardType
+
 class KeyboardService : LifecycleInputMethodService(),
     ViewModelStoreOwner,
     SavedStateRegistryOwner {
-
-
     private var keyboardView: View? = null
     private val _isCapsEnabled = mutableStateOf(false)
     val isCapsEnabled: State<Boolean> = _isCapsEnabled
+
+
+    private val _keyboardType = mutableStateOf(KeyboardType.LETTERS)
+    val keyboardType: State<KeyboardType> = _keyboardType
+
 
     private val _isNumberKeyboard = mutableStateOf(false)
     val isNumberKeyboard: Boolean
@@ -59,18 +67,13 @@ class KeyboardService : LifecycleInputMethodService(),
         } else {
             if (_isCapsEnabled.value) {
                 _isCapsEnabled.value = false
-            }
-            else
-            {
+            } else {
                 _isNextLetterCaps.value = _isNextLetterCaps.value.not()
             }
         }
-        println("changeNextLetterCaps" + " " + _isNextLetterCaps.value)
-        println("changeLetterCaps" + " " + _isCapsEnabled.value)
         _lastCapsTapTime.value = currentTime
         short_vibrate(this)
     }
-
 
 
     override fun onCreateInputView(): View {
@@ -88,17 +91,47 @@ class KeyboardService : LifecycleInputMethodService(),
     // In KeyboardService.kt
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
-        resetKeyboardState() // Reset state before UI loads
+        resetKeyboardState()
+        val inputType = info?.inputType ?: 0
+        when (inputType and InputType.TYPE_MASK_CLASS) {
+            InputType.TYPE_CLASS_NUMBER -> {
+                _keyboardType.value = KeyboardType.PURENUMBERS
+                Log.d("KeyboardTyp", "Number input detected")
+            }
+
+            InputType.TYPE_CLASS_TEXT -> {
+                _keyboardType.value = KeyboardType.LETTERS
+
+                Log.d("KeyboardTyp", "Text input detected")
+                when (inputType and InputType.TYPE_MASK_VARIATION) {
+                    InputType.TYPE_TEXT_VARIATION_PASSWORD -> {
+                        Log.d("KeyboardTyp", "Password input")
+                    }
+
+                    InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS -> {
+                        Log.d("KeyboardTyp", "Email input")
+                    }
+                }
+            }
+
+            InputType.TYPE_CLASS_PHONE -> {
+                _keyboardType.value = KeyboardType.PURENUMBERS
+                Log.d("KeyboardTyp", "Phone input detected")
+            }
+        }
+
         (keyboardView as? ComposeKeyboardView)?.apply {
-            disposeComposition() // Clear old composition
-            createComposition()  // Rebuild fresh
+            disposeComposition()
+            createComposition()
         }
     }
-     fun resetKeyboardState() {
+
+    fun resetKeyboardState() {
         _isCapsEnabled.value = false
         _isNumberKeyboard.value = false
         _isEmojiKeyboard.value = false
     }
+
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate() {

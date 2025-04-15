@@ -39,7 +39,7 @@ object KeyboardSizing {
     }
 
     fun calculateHorizontalPadding(screenWidth: Dp): Dp {
-        return (screenWidth * 0.002f).coerceIn(1.dp, 3.dp)
+        return (screenWidth * 0.004f).coerceIn(1.dp, 3.dp)
     }
 
 
