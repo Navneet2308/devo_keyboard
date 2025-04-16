@@ -43,8 +43,6 @@ class KeyboardService : LifecycleInputMethodService(),
     val isNextLetterCaps: State<Boolean> = _isNextLetterCaps
 
     private val _lastCapsTapTime = mutableStateOf(0L)
-    val lastCapsTapTime: Long
-        get() = _lastCapsTapTime.value
 
     fun changeNextLetterCaps() {
         println("changeNextLetterCaps" + " " + _isNextLetterCaps.value)
@@ -58,9 +56,16 @@ class KeyboardService : LifecycleInputMethodService(),
 
     }
 
+    fun toggle()
+    {
+        _isCapsEnabled.value = true
+        _isNextLetterCaps.value = false
+    }
+
     fun toggleCaps() {
         val currentTime = System.currentTimeMillis()
         val timeDiff = currentTime - _lastCapsTapTime.value
+        println("timeDifftimeDiff"+timeDiff)
         if (timeDiff < 300) {
             _isCapsEnabled.value = true
             _isNextLetterCaps.value = false
@@ -72,6 +77,7 @@ class KeyboardService : LifecycleInputMethodService(),
             }
         }
         _lastCapsTapTime.value = currentTime
+        println("_lastCapsTapTime"+_lastCapsTapTime.value.toString())
         short_vibrate(this)
     }
 

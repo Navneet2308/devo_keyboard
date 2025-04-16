@@ -74,7 +74,7 @@ object Key {
         return listOf(
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
             listOf(" ", "@", "#", "$", "%", "&", "-", "+", "(", ")", " "),
-            listOf(SPECIAL_CHANGESPE, "*", "'", ":", ";", "!", "?", SPECIAL_BACK),
+            listOf(SPECIAL_CHANGESPE, "*","''" ,"'", ":", ";", "!", "?", SPECIAL_BACK),
             listOf(SPECIAL_ABCKEY, SPECIAL_NUMKEY, ",", SPECIAL_LANGUAGE, ".", SPECIAL_ENTER)
         )
     }

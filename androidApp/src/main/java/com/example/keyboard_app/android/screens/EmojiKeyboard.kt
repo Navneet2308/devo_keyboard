@@ -3,6 +3,7 @@ package com.example.keyboard_app.android.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,10 +31,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -47,6 +50,8 @@ import com.example.keyboard_app.android.utils.getBorderColor
 import com.example.keyboard_app.android.utils.getKeyColor
 import com.example.keyboard_app.android.utils.getKeyIconColor
 import com.example.keyboard_app.android.utils.getKeyTextColor
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -182,6 +187,9 @@ private fun EmojiItem(emoji: String, onClick: () -> Unit) {
 
 @Composable
 private fun BottomControls(service: KeyboardService, onKeyboardTypeChange: (KeyboardType) -> Unit) {
+    val scope = rememberCoroutineScope()
+    var isLongPressed by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -198,13 +206,38 @@ private fun BottomControls(service: KeyboardService, onKeyboardTypeChange: (Keyb
                     onKeyboardTypeChange(KeyboardType.LETTERS)
                 }
         )
+
         Icon(
             painter = painterResource(R.drawable.delete_dark),
             contentDescription = null,
             tint = getKeyIconColor(),
             modifier = Modifier
                 .size(30.dp)
-                .clickable { service.currentInputConnection?.deleteSurroundingText(1, 0) }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            isLongPressed = true
+                            scope.launch {
+                                while (isLongPressed) {
+                                    service.currentInputConnection?.deleteSurroundingText(1, 0)
+                                    delay(100) // Adjust delay for deletion speed
+                                }
+                            }
+                        },
+                        onPress = {
+                            isLongPressed = try {
+                                awaitRelease()
+                                false
+                            } catch (e: Exception) {
+                                false
+                            }
+                        },
+                        onTap = {
+                            // Single tap action
+                            service.currentInputConnection?.deleteSurroundingText(1, 0)
+                        }
+                    )
+                }
         )
     }
 }

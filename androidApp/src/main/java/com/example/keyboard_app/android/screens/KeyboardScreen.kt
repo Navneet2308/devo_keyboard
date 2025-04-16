@@ -1,6 +1,9 @@
 package com.example.keyboard_app.android.screens
 
 import android.content.res.Configuration
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import androidx.compose.animation.core.animateFloatAsState
@@ -127,7 +130,7 @@ fun KeyboardScreen() {
                 keyboardType = newType
             })
 
-            KeyboardType.LETTERS, KeyboardType.NUMBERS2, KeyboardType.NUMBERS,KeyboardType.PURENUMBERS, KeyboardType.SEMIPURENUMBERS -> {
+            KeyboardType.LETTERS, KeyboardType.NUMBERS2, KeyboardType.NUMBERS, KeyboardType.PURENUMBERS, KeyboardType.SEMIPURENUMBERS -> {
                 keys.forEach { row ->
                     Row(Modifier.fillMaxWidth()) {
                         Spacer(Modifier.width(calculatekeyMargin(screenWidth, screenHeight)))
@@ -146,8 +149,7 @@ fun KeyboardScreen() {
                                         keyboardType = newType
                                     }
                                 )
-                            }
-                          else  if ( keyboardType == KeyboardType.SEMIPURENUMBERS) {
+                            } else if (keyboardType == KeyboardType.SEMIPURENUMBERS) {
                                 KeyboardKey(
                                     keyboardType = keyboardType,
                                     key = key,
@@ -161,9 +163,7 @@ fun KeyboardScreen() {
                                         keyboardType = newType
                                     }
                                 )
-                            }
-
-                            else {
+                            } else {
                                 KeyboardKey(
                                     keyboardType = keyboardType,
                                     key = key,
@@ -233,42 +233,36 @@ fun KeyboardKey(
             .scale(scale)
             .pointerInput(keyboardType) {
                 detectTapGestures(
-                    onPress = { event ->
+                    onPress = { offset ->
                         isPressed = true
                         showPopup = true
-                        short_vibrate(ctx)
+//                        short_vibrate(context = ctx)
                         val longPressJob = coroutineScope.launch {
-                            delay(300L)  // Reduced from 400ms for faster response
+                            delay(300L)
                             if (isPressed) {
                                 isLongPressActive = true
                                 when (key) {
-                                    in listOf(
-                                        SPECIAL_BACK,
-                                        SPECIAL_ENTER,
-                                        SPECIAL_LANGUAGE
-                                    ) -> startContinuousAction(
-                                        ctx,
-                                        key
-                                    )
+                                    SPECIAL_BACK, SPECIAL_ENTER, SPECIAL_LANGUAGE ->
+                                        startContinuousAction(ctx, key)
 
                                     else -> handleLongPress(ctx, key)
                                 }
                             }
                         }
-
-                        tryAwaitRelease()
-                        longPressJob.cancel()
-
-                        if (isLongPressActive) {
-                            stopContinuousAction()
-                            isLongPressActive = false
-                        } else {
+                        if (!isLongPressActive) {
                             handleShortKeyAction(keyboardType, ctx, key, onKeyboardTypeChange)
                         }
+                        try {
+                            tryAwaitRelease()
+                        }
 
-                        // Reset states
-                        isPressed = false
-                        showPopup = false
+                        finally {
+                            longPressJob.cancel()
+                            isLongPressActive = false
+                            stopContinuousAction()
+                            isPressed = false
+                            showPopup = false
+                        }
                     }
                 )
             }
@@ -289,7 +283,7 @@ fun KeyboardKey(
             isSpecial && key != SPECIAL_LANGUAGE -> IconKey(key)
             else -> TextKey(key, textSize)
         }
-
+      
         if (showPopup) {
             Popup(
                 alignment = Alignment.TopCenter,
@@ -344,6 +338,7 @@ fun KeyboardKey(
         }
     }
 }
+
 private fun calculateWeights3(row: List<String>): List<Float> {
     val specialWeights =
         mapOf(
@@ -360,11 +355,12 @@ private fun calculateWeights3(row: List<String>): List<Float> {
             "(" to 1.5f,
             ")" to 1.5f,
 
-        )
+            )
     val specialWeightSum = row.sumOf { specialWeights[it]?.toDouble() ?: 0.0 }.toFloat()
     val normalWeight = (10f - specialWeightSum) / (row.count { it !in specialWeights })
     return row.map { specialWeights[it] ?: normalWeight }
 }
+
 private fun calculateWeights2(row: List<String>): List<Float> {
     val specialWeights =
         mapOf(
@@ -399,60 +395,62 @@ private fun handleShortKeyAction(
     key: String,
     onKeyboardTypeChange: (KeyboardType) -> Unit
 ) {
-    println("Key pressed: $key, Current type: $keyboardType") // Debug log
+    val inputConnection = ctx.currentInputConnection ?: return
+
     when (key) {
-        SPECIAL_BACK -> ctx.currentInputConnection?.deleteSurroundingText(1, 0)
-        SPECIAL_ENTER -> ctx.currentInputConnection?.sendKeyEvent(
-            KeyEvent(
-                KeyEvent.ACTION_DOWN,
-                KeyEvent.KEYCODE_ENTER
-            )
+        SPECIAL_BACK -> inputConnection.deleteSurroundingText(1, 0)
+
+        SPECIAL_ENTER -> inputConnection.sendKeyEvent(
+            KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)
         )
 
         SPECIAL_EMOJI -> onKeyboardTypeChange(KeyboardType.EMOJI)
-        SPECIAL_ARROW_TOP -> ctx.toggleCaps()
-        SPECIAL_ARROW_RIGHT -> ctx.currentInputConnection.performEditorAction(EditorInfo.IME_ACTION_NEXT)
-        SPECIAL_LANGUAGE -> ctx.currentInputConnection?.commitText(" ", 1)
-        SPECIAL_QONEHASH -> {
-            onKeyboardTypeChange(KeyboardType.NUMBERS)
-        }
 
+        SPECIAL_ARROW_TOP ->   ctx.toggleCaps()
 
-        SPECIAL_CHANGESPE -> {
-            onKeyboardTypeChange(KeyboardType.NUMBERS2)
-        }
+        SPECIAL_ARROW_RIGHT -> inputConnection.performEditorAction(EditorInfo.IME_ACTION_NEXT)
 
-        SPECIAL_QNUMKEY -> {
-            onKeyboardTypeChange(KeyboardType.NUMBERS)
-        }
+        SPECIAL_LANGUAGE -> inputConnection.commitText(" ", 1)
 
-        SPECIAL_ABCKEY -> {
-            onKeyboardTypeChange(KeyboardType.LETTERS)
-        }
+        SPECIAL_QONEHASH,
+        SPECIAL_QNUMKEY -> onKeyboardTypeChange(KeyboardType.NUMBERS)
 
-        SPECIAL_NUMKEY -> {
-            onKeyboardTypeChange(KeyboardType.SEMIPURENUMBERS)
-        }
+        SPECIAL_CHANGESPE -> onKeyboardTypeChange(KeyboardType.NUMBERS2)
+
+        SPECIAL_ABCKEY -> onKeyboardTypeChange(KeyboardType.LETTERS)
+
+        SPECIAL_NUMKEY -> onKeyboardTypeChange(KeyboardType.SEMIPURENUMBERS)
 
         else -> {
-            if (key.contains(SPECIAL_HASH_STAR)) {
-                val text = "*"
-                ctx.currentInputConnection?.commitText(text, text.length)
-            } else if (key.contains(SPECIAL_DOUBLE_DASH)) {
-                ctx.currentInputConnection?.commitText(" ", 1)
-            } else if (key.contains(SPECIAL_ZERO_PLUSH)) {
-                val text = "0"
-                ctx.currentInputConnection?.commitText(text, text.length)
-            } else if (keyboardType == KeyboardType.NUMBERS || keyboardType == KeyboardType.NUMBERS2) {
-                ctx.currentInputConnection?.commitText(key, key.length)
-            } else {
-                val text = if (key.contains("^")) key.split("^")[0] else key
-                ctx.currentInputConnection?.commitText(
-                    if (ctx.isCapsEnabled.value || ctx.isNextLetterCaps.value) text.uppercase() else text.lowercase(),
-                    text.length
-                )
-                if (!key.contains(SPECIAL_ARROW_TOP)) {
-                    ctx.changeNextLetterCaps()
+            when {
+                key.contains(SPECIAL_HASH_STAR) -> {
+                    inputConnection.commitText("*", 1)
+                }
+
+                key.contains(SPECIAL_DOUBLE_DASH) -> {
+                    inputConnection.commitText(" ", 1)
+                }
+
+                key.contains(SPECIAL_ZERO_PLUSH) -> {
+                    inputConnection.commitText("0", 1)
+                }
+
+                keyboardType == KeyboardType.NUMBERS || keyboardType == KeyboardType.NUMBERS2 -> {
+                    inputConnection.commitText(key, key.length)
+                }
+
+                else -> {
+                    val actualText = key.substringBefore("^")
+                    val formattedText = if (ctx.isCapsEnabled.value || ctx.isNextLetterCaps.value)
+                        actualText.uppercase()
+                    else
+                        actualText.lowercase()
+
+                    inputConnection.commitText(formattedText, actualText.length)
+
+                    if (!key.contains(SPECIAL_ARROW_TOP)) {
+                        ctx.changeNextLetterCaps()
+                    }
                 }
             }
         }

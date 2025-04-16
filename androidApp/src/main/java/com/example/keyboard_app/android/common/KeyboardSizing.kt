@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 object KeyboardSizing {
     val keyCornerRadius = 8.dp
 
-    val keyMargin = 2.dp
+    val keyMargin = 6.dp
 
 
     fun calculateKeyHeight(screenHeight: Dp, orientation: Int): Dp {
@@ -44,7 +44,7 @@ object KeyboardSizing {
 
 
     fun calculateVerticalPadding(screenHeight: Dp): Dp {
-        return (screenHeight * 0.002f).coerceIn(1.dp, 3.dp)
+        return (screenHeight * 0.008f).coerceIn(1.dp, 3.dp)
     }
 
 
