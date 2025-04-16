@@ -1,21 +1,5 @@
 package com.example.keyboard_app.android.common
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.keyboard_app.android.R
 import com.example.keyboard_app.android.ime.KeyboardType
 
 
@@ -73,7 +57,7 @@ object Key {
     fun getNumberKeys(): List<List<String>> {
         return listOf(
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
-            listOf(" ", "@", "#", "$", "%", "&", "-", "+", "(", ")", " "),
+            listOf("@", "#", "$", "%", "&", "-", "+", "(", ")", "/"),
             listOf(SPECIAL_CHANGESPE, "*","''" ,"'", ":", ";", "!", "?", SPECIAL_BACK),
             listOf(SPECIAL_ABCKEY, SPECIAL_NUMKEY, ",", SPECIAL_LANGUAGE, ".", SPECIAL_ENTER)
         )
@@ -83,7 +67,7 @@ object Key {
     fun getNumberKeys2(): List<List<String>> {
         return listOf(
             listOf("~", "`", "|", "•", "√", "π", "÷", "×", "§", "∆"),
-            listOf("€", "¥", "$", "¢", "⁑", "°", "=", "{", "}", "\\"),
+            listOf("€", "¥", "$", "¢", "^", "°", "=", "{", "}", "\\"),
             listOf(SPECIAL_QNUMKEY, "%", "©", "®", "™", "✓", "[", "]", SPECIAL_BACK),
             listOf(SPECIAL_ABCKEY, SPECIAL_NUMKEY, "<", SPECIAL_LANGUAGE, ">", SPECIAL_ENTER)
         )

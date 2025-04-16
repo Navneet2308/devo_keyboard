@@ -254,9 +254,7 @@ fun KeyboardKey(
                         }
                         try {
                             tryAwaitRelease()
-                        }
-
-                        finally {
+                        } finally {
                             longPressJob.cancel()
                             isLongPressActive = false
                             stopContinuousAction()
@@ -279,11 +277,16 @@ fun KeyboardKey(
         contentAlignment = Alignment.Center
     ) {
         when {
-            key.contains("^") -> DualTextKey(key, config.screenWidthDp.dp, config.screenHeightDp.dp)
+            key.contains("^") && key != "^" -> DualTextKey(
+                key,
+                config.screenWidthDp.dp,
+                config.screenHeightDp.dp
+            )
+
             isSpecial && key != SPECIAL_LANGUAGE -> IconKey(key)
             else -> TextKey(key, textSize)
         }
-      
+
         if (showPopup) {
             Popup(
                 alignment = Alignment.TopCenter,
@@ -304,7 +307,7 @@ fun KeyboardKey(
                     contentAlignment = Alignment.Center
                 ) {
                     when {
-                        key.contains("^") -> Text(
+                        key.contains("^") && key != "^" -> Text(
                             text = if (isLongPressActive) key.split("^")[1] else key.split("^")[0],
                             fontSize = if (isLongPressActive) 18.sp else 18.sp,
                             color = getKeyTextColor(isLongPressActive),
@@ -406,7 +409,7 @@ private fun handleShortKeyAction(
 
         SPECIAL_EMOJI -> onKeyboardTypeChange(KeyboardType.EMOJI)
 
-        SPECIAL_ARROW_TOP ->   ctx.toggleCaps()
+        SPECIAL_ARROW_TOP -> ctx.toggleCaps()
 
         SPECIAL_ARROW_RIGHT -> inputConnection.performEditorAction(EditorInfo.IME_ACTION_NEXT)
 
@@ -513,7 +516,7 @@ private fun TextKey(key: String, textSize: TextUnit) {
 }
 
 private fun handleLongPress(ctx: KeyboardService, key: String) {
-    if (key.contains("^")) {
+    if (key.contains("^") && key != "^") {
         val text = key.split("^")[1]
         ctx.currentInputConnection?.commitText(text, text.length)
     }
